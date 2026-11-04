@@ -1,6 +1,6 @@
 # B站下载器分享：图形界面 + 扫码登录，macOS 双击即用的小狐狸 🦊
 
-**【免费下载链接】** macOS / Linux 安装包：https://github.com/oldsixxiaolv/bilifetch/releases/tag/v1.0.0
+**【免费下载链接】** macOS / Linux 安装包：https://github.com/oldsixxiaolv/bilifetch/releases/tag/v1.1.0
 
 网页右键「另存为」只能拿到 480P，多 P 视频还得一个个点；想整季一起下，番剧的每一集都得分开处理。所以我自己写了一个带图形界面的 B 站下载器，macOS 上下载完拖进「应用程序」就能用，图标是一只小狐狸。
 
@@ -14,11 +14,11 @@ BiliFetch 是一个跨平台的 B 站视频下载工具，同时提供图形界�
 
 ## 2、怎么装
 
-macOS 上最省事：下载 `BiliFetch-1.0.0-macOS.dmg`，打开之后把 `BiliFetch.app` 拖到右边的 **Applications** 图标上就可以了。拖完在「应用程序」里就能看到那只小狐狸，双击即用。
+macOS 上最省事：下载 `BiliFetch-1.1.0-macOS.dmg`，打开之后把 `BiliFetch.app` 拖到右边的 **Applications** 图标上就可以了。拖完在「应用程序」里就能看到那只小狐狸，双击即用。
 
 第一次双击如果提示「无法验证开发者」，**右键点 BiliFetch.app → 打开 → 再点「打开」**就行。这是个人项目没做公证（notarization）造成的，不是文件坏了。
 
-Linux 用 `sudo apt install ./bilifetch_1.0.0_all.deb` 装完，再补上 `python3-pyqt5` 和 `ffmpeg`（合并音视频要用）即可。喜欢命令行的话，`bilifetch 'https://www.bilibili.com/bangumi/play/ep1633643'` 一条链接直接开下，和图形界面共用同一套逻辑。
+Linux 用 `sudo apt install ./bilifetch_1.1.0_all.deb` 装完，再补上 `python3-pyqt5` 和 `ffmpeg`（合并音视频要用）即可。喜欢命令行的话，`bilifetch 'https://www.bilibili.com/bangumi/play/ep1633643'` 一条链接直接开下，和图形界面共用同一套逻辑。
 
 ## 3、怎么用（三步）
 

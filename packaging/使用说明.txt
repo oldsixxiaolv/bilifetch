@@ -31,7 +31,7 @@ BiliFetch —— B 站视频下载器
 
 用 .pkg 装（给习惯 installer 的用户）
 --------------------------------
-    sudo installer -pkg BiliFetch-1.0.0-cli.pkg -target /
+    sudo installer -pkg BiliFetch-1.1.0-cli.pkg -target /
     这个包只装命令行版，且没做公证，会被 Gatekeeper 拦，右键->打开可以放行。
 
 

@@ -8,7 +8,7 @@
   3. 解开 data.tar.gz，核对 md5sums 与实际文件是否一致
   4. 模拟安装：把 data.tar.gz 解到临时目录，直接运行里面的 usr/bin/bilifetch
 
-用法：python3 packaging/verify_deb.py dist/bilifetch_1.0.0_all.deb
+用法：python3 packaging/verify_deb.py dist/bilifetch_1.1.0_all.deb
 """
 
 import gzip

@@ -9,8 +9,8 @@
 # 所以不会出现"无法验证开发者"的弹窗。
 
 cask "bilifetch" do
-  version "1.0.0"
-  sha256 "8f0afaef19789ed943732dce17c2892ed66575efe2761c4e8c0567f8fe286a48"
+  version "1.1.0"
+  sha256 "357087218e63899cd4e1e63d32a9492baba5d48a85d7b899d5ad90399bda6094"
 
   url "https://github.com/oldsixxiaolv/bilifetch/releases/download/v#{version}/BiliFetch-#{version}-macOS.dmg"
   name "BiliFetch"

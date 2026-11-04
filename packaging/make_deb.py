@@ -8,7 +8,7 @@ macOS 上没有 dpkg-deb，所以手写 ar 容器：
 用法：
     python3 packaging/make_deb.py --payload build/deb-root \
         --control packaging/control --scripts packaging/deb-scripts \
-        --output dist/bilifetch_1.0.0_all.deb
+        --output dist/bilifetch_1.1.0_all.deb
 """
 
 import argparse

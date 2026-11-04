@@ -34,7 +34,7 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
 
 API = "https://api.bilibili.com"
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 # 画质 id -> 名称（B 站官方编码）
 QN_NAME = {
@@ -749,6 +749,10 @@ def download_episode(client, bvid, cid, name, out_dir, quality=0, threads=16, cd
         subprocess.run([ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
                         "-i", afile, "-c", "copy", out], check=True)
         os.remove(afile)
+        try:
+            os.rmdir(tmpdir)       # 临时目录空了就删掉，别在下载目录里留个 .tmp
+        except OSError:
+            pass
         return out
 
     if not vstream:

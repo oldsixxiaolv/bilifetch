@@ -14,12 +14,14 @@ BiliFetch 图形界面（PyQt5）
   输入卡    链接输入 + 解析；保存位置 + 画质
   队列卡    下载 / 日志 两个分段；队列是 QListView + 自绘 delegate
 
-流畅度上的关键点：
+流畅度与设计工程关键点（Emil Kowalski Design Engineering & Apple Fluid Interfaces）：
   * 下载是一个常驻的后台队列：下载过程中可以继续解析别的链接，新任务直接排到队尾，
     不用等上一批结束，也不再有"停止 -> 等线程 -> 再开始"的一串排队状态。
   * 进度信号只改数据，不直接重绘；由一个共享的 16ms 动画定时器把进度条平滑推到目标值，
     只在有行在动的时候运行，只重绘在动的那几行。
-  * 速度每 0.5 秒统一算一次（指数平滑），读数不跳。
+  * 速度每 0.5 秒统一算一次（指数平滑），配合等宽数字（tabular-nums）读数稳而不抖。
+  * 列表悬停即显快捷操作胶囊（定位 / 重试 / 取消），上下滚动边缘带柔和渐隐遮罩。
+  * 底部 Sonner 风格 Toast：带语义图标、底部滑入/滑出空间一致性、悬停暂停计时、点击即关。
 """
 
 import collections
@@ -33,15 +35,15 @@ import threading
 import time
 import traceback
 
-from PyQt5.QtCore import (QAbstractListModel, QByteArray, QEasingCurve, QEvent, QModelIndex,
-                          QPropertyAnimation, QRectF, QSize, Qt, QThread, QTimer, pyqtSignal)
-from PyQt5.QtGui import (QColor, QFont, QFontMetrics, QIcon, QKeySequence, QPainter, QPen,
-                         QPixmap)
+from PyQt5.QtCore import (QAbstractListModel, QByteArray, QEvent, QModelIndex,
+                          QPointF, QRectF, QSize, Qt, QThread, QTimer, QVariantAnimation,
+                          pyqtSignal)
+from PyQt5.QtGui import (QColor, QFont, QFontMetrics, QIcon, QKeySequence, QPainter,
+                         QPainterPath, QPen, QPixmap)
 from PyQt5.QtWidgets import (QAbstractItemView, QAction, QApplication, QDialog,
-                             QFileDialog, QGraphicsOpacityEffect, QHBoxLayout, QLabel,
-                             QLineEdit, QListView, QMainWindow, QMenu, QMessageBox,
-                             QPlainTextEdit, QStackedWidget, QStyledItemDelegate, QVBoxLayout,
-                             QWidget)
+                             QFileDialog, QHBoxLayout, QLabel, QLineEdit, QListView,
+                             QMainWindow, QMenu, QMessageBox, QPlainTextEdit,
+                             QStackedWidget, QStyledItemDelegate, QVBoxLayout, QWidget)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bilifetch as core          # noqa: E402
@@ -50,9 +52,12 @@ import bilifetch_collection_gui as collection_gui     # noqa: E402
 import bilifetch_login as login_mod                    # noqa: E402
 from bilifetch_collection_gui import CollectionDialog   # noqa: E402
 from bilifetch_login_gui import LoginDialog             # noqa: E402
-from bilifetch_ui import (ACCENT, BLUE, INK, INK_2, INK_3, ORANGE,  # noqa: E402
-                          QSS, RED, STATE_COLORS, TRACK, AccountChip, Button, Card, ComboBox,
-                          IconButton, LogoTile, Segmented, draw_fox, make_icon, ui_font)
+from bilifetch_ui import (ACCENT, ACCENT_SOFT, BLUE, CARD, DUR_POPOVER, DUR_TOAST_IN,  # noqa: E402
+                          DUR_TOAST_OUT, FIELD, GREEN, INK, INK_2, INK_3, LINE, ORANGE,
+                          QSS, RED, STATE_COLORS, TRACK, AccountChip, Button, Card,
+                          ComboBox, IconButton, LogoTile, Segmented, animate_dialog_open,
+                          draw_fox, draw_scroll_edge_fade, ease_out, eval_ease_out,
+                          make_icon, mix, reduced_motion, tabular_font, ui_font)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -366,7 +371,13 @@ class QueueModel(QAbstractListModel):
         if role == Qt.DisplayRole:
             return job["title"]
         if role == Qt.ToolTipRole:
-            return job.get("error") or job.get("path") or job["title"]
+            # break-ui 规范：任何可能被截断的标题、路径或报错都在 Tooltip 中完整呈现
+            lines = [job.get("title") or ""]
+            if job.get("error"):
+                lines.append("原因：" + job["error"])
+            elif job.get("path"):
+                lines.append("位置：" + job["path"])
+            return "\n".join(x for x in lines if x)
         return None
 
     def _reindex(self):
@@ -375,6 +386,10 @@ class QueueModel(QAbstractListModel):
     def add(self, jobs):
         if not jobs:
             return
+        now = time.monotonic()
+        # Choreograph 规范：前 5 项做 35ms 微错峰入场，总延迟控制在 175ms 内，绝不阻塞长列表
+        for idx, j in enumerate(jobs):
+            j["enter_t"] = now + min(idx, 5) * 0.035
         n = len(self.jobs)
         self.beginInsertRows(QModelIndex(), n, n + len(jobs) - 1)
         self.jobs.extend(jobs)
@@ -406,18 +421,45 @@ class QueueModel(QAbstractListModel):
 
 class QueueDelegate(QStyledItemDelegate):
     ROW_H = 68
+    ACTION_W = 64
+    ACTION_H = 26
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.f_title = ui_font(13, QFont.Medium)
         self.f_meta = ui_font(12)
-        self.f_num = ui_font(11, QFont.DemiBold)
+        self.f_meta_tab = tabular_font(12, QFont.Normal)
+        self.f_status_tab = tabular_font(12, QFont.Medium)
+        self.f_num = tabular_font(11, QFont.DemiBold)
+        self.f_action = ui_font(12, QFont.Medium)
         self.fm_title = QFontMetrics(self.f_title)
         self.fm_meta = QFontMetrics(self.f_meta)
         self.hover_row = -1
+        self.hover_action = False
+        self.press_action = False
 
     def sizeHint(self, option, index):
         return QSize(option.rect.width(), self.ROW_H)
+
+    @staticmethod
+    def action_spec(job):
+        """返回当前行在悬停时可提供的快捷操作 (kind, icon, label)。"""
+        if not job:
+            return None
+        st = job["state"]
+        if st == "done" and job.get("path"):
+            return ("reveal", "folder", "定位")
+        if st in ("fail", "cancel"):
+            return ("retry", "retry", "重试")
+        if st in ("wait", "run"):
+            return ("cancel", "close", "取消")
+        return None
+
+    def action_rect(self, option_rect):
+        r = QRectF(option_rect).adjusted(8, 3, -8, -3)
+        return QRectF(r.right() - self.ACTION_W - 12,
+                      r.center().y() - self.ACTION_H / 2.0,
+                      self.ACTION_W, self.ACTION_H)
 
     @staticmethod
     def status_text(job):
@@ -467,16 +509,32 @@ class QueueDelegate(QStyledItemDelegate):
             return
         p.save()
         p.setRenderHint(QPainter.Antialiasing)
+
+        now = time.monotonic()
+        enter_t = job.get("enter_t")
+        if enter_t is not None and not reduced_motion():
+            dt = now - enter_t
+            if dt < 0:
+                p.restore()
+                return
+            if dt < 0.22:
+                prog = eval_ease_out(dt / 0.22)
+                p.setOpacity(prog)
+                p.translate(0.0, (1.0 - prog) * 6.0)
+            else:
+                job.pop("enter_t", None)
+
         r = QRectF(option.rect).adjusted(8, 3, -8, -3)
         st = job["state"]
         fg, soft = STATE_COLORS.get(st, STATE_COLORS["wait"])
+        is_hover = (index.row() == self.hover_row)
 
-        if index.row() == self.hover_row:
+        if is_hover:
             p.setPen(Qt.NoPen)
             p.setBrush(QColor("#F6F7F8"))
             p.drawRoundedRect(r, 10, 10)
 
-        # 左侧状态圆：运行中是环形进度，完成打勾，失败感叹号
+        # 左侧状态圆：运行中是环形进度，合并中是动态旋转环，完成打勾（带入场弹性），失败叉号
         c = QRectF(r.left() + 12, r.center().y() - 16, 32, 32)
         pct = job.get("shown", 0.0)
         if st in ("run", "merge"):
@@ -486,12 +544,27 @@ class QueueDelegate(QStyledItemDelegate):
             pen = QPen(QColor(ORANGE if st == "merge" else BLUE), 3)
             pen.setCapStyle(Qt.RoundCap)
             p.setPen(pen)
-            span = 360 if st == "merge" else max(4.0, pct * 3.6)
-            p.drawArc(c.adjusted(2, 2, -2, -2), 90 * 16, int(-span * 16))
+            if st == "merge":
+                ang = job.get("merge_angle", 0.0)
+                p.drawArc(c.adjusted(2, 2, -2, -2), int((90 - ang) * 16), int(-240 * 16))
+            else:
+                span = max(4.0, pct * 3.6)
+                p.drawArc(c.adjusted(2, 2, -2, -2), 90 * 16, int(-span * 16))
             p.setPen(QColor(INK_2))
             p.setFont(self.f_num)
             p.drawText(c, Qt.AlignCenter, "%d" % int(pct) if st == "run" else "···")
         else:
+            p.save()
+            done_t = job.get("done_t")
+            if st == "done" and done_t is not None and not reduced_motion():
+                dt_done = now - done_t
+                if 0.0 <= dt_done < 0.22:
+                    sc = 0.86 + 0.14 * eval_ease_out(dt_done / 0.22)
+                    p.translate(c.center())
+                    p.scale(sc, sc)
+                    p.translate(-c.center())
+                else:
+                    job.pop("done_t", None)
             p.setPen(Qt.NoPen)
             p.setBrush(QColor(soft))
             p.drawEllipse(c)
@@ -503,27 +576,54 @@ class QueueDelegate(QStyledItemDelegate):
                 p.setPen(QColor(INK_3))
                 p.setFont(self.f_num)
                 p.drawText(c, Qt.AlignCenter, "%d" % (index.row() + 1))
+            p.restore()
 
-        # 文字
+        # 右侧状态或悬停快捷操作胶囊
+        spec = self.action_spec(job) if is_hover else None
+        right_w = 96
         x = c.right() + 14
-        right_w = 92
         tw = r.right() - x - right_w - 14
         top = r.center().y() - 19
+
         p.setFont(self.f_title)
         p.setPen(QColor(INK if st != "cancel" else INK_3))
         p.drawText(QRectF(x, top, tw, 20), Qt.AlignLeft | Qt.AlignVCenter,
                    self.fm_title.elidedText(job["title"], Qt.ElideRight, int(tw)))
 
-        status = self.status_text(job)
-        p.setFont(self.f_meta)
-        p.setPen(QColor(fg if st != "wait" else INK_3))
-        p.drawText(QRectF(r.right() - right_w - 14, top, right_w, 20),
-                   Qt.AlignRight | Qt.AlignVCenter, status)
+        if spec is not None:
+            act_r = self.action_rect(option.rect)
+            p.save()
+            if self.hover_action and self.press_action and not reduced_motion():
+                p.translate(act_r.center())
+                p.scale(0.95, 0.95)
+                p.translate(-act_r.center())
+            bg_c = QColor("#E4E6E9") if (self.hover_action and self.press_action) else (
+                QColor("#EAECEF") if self.hover_action else QColor("#FFFFFF"))
+            p.setBrush(bg_c)
+            p.setPen(QPen(QColor(LINE), 1))
+            p.drawRoundedRect(act_r, 8, 8)
+            ic_color = RED if spec[0] == "cancel" else (ACCENT if spec[0] == "retry" else INK)
+            p.drawPixmap(QPointF(act_r.left() + 10, act_r.center().y() - 6.5),
+                         make_icon(spec[1], ic_color, 13))
+            p.setFont(self.f_action)
+            p.setPen(QColor(ic_color))
+            p.drawText(QRectF(act_r.left() + 26, act_r.top(), act_r.width() - 30, act_r.height()),
+                       Qt.AlignLeft | Qt.AlignVCenter, spec[2])
+            p.restore()
+        else:
+            status = self.status_text(job)
+            # 网速含数字时采用 tabular_font，防止数字变化造成右对齐抖动
+            p.setFont(self.f_status_tab if (st == "run" and job.get("speed")) else self.f_meta)
+            p.setPen(QColor(fg if st != "wait" else INK_3))
+            p.drawText(QRectF(r.right() - right_w - 14, top, right_w, 20),
+                       Qt.AlignRight | Qt.AlignVCenter, status)
 
         meta = self.meta_text(job)
+        meta_right_pad = (self.ACTION_W + 24) if spec is not None else 14
+        meta_w = max(40.0, r.right() - x - meta_right_pad)
         if st in ("run", "merge"):
-            # 细进度条 + 下面一行明细
-            bar = QRectF(x, top + 26, r.right() - x - 14, 4)
+            # 细进度条 + 下面一行明细（运行期数字采用等宽字体防抖）
+            bar = QRectF(x, top + 26, meta_w, 4)
             p.setPen(Qt.NoPen)
             p.setBrush(QColor(TRACK))
             p.drawRoundedRect(bar, 2, 2)
@@ -531,19 +631,24 @@ class QueueDelegate(QStyledItemDelegate):
             if w > 1:
                 p.setBrush(QColor(ORANGE if st == "merge" else BLUE))
                 p.drawRoundedRect(QRectF(bar.left(), bar.top(), w, bar.height()), 2, 2)
+            p.setFont(self.f_meta_tab if st == "run" else self.f_meta)
             p.setPen(QColor(INK_3))
-            p.drawText(QRectF(x, top + 33, r.right() - x - 14, 16),
+            fm_m = QFontMetrics(p.font())
+            p.drawText(QRectF(x, top + 33, meta_w, 16),
                        Qt.AlignLeft | Qt.AlignVCenter,
-                       self.fm_meta.elidedText(meta, Qt.ElideRight, int(r.right() - x - 14)))
+                       fm_m.elidedText(meta, Qt.ElideRight, int(meta_w)))
         else:
+            p.setFont(self.f_meta)
             p.setPen(QColor(RED if st == "fail" else INK_3))
-            p.drawText(QRectF(x, top + 22, r.right() - x - 14, 18),
+            p.drawText(QRectF(x, top + 22, meta_w, 18),
                        Qt.AlignLeft | Qt.AlignVCenter,
-                       self.fm_meta.elidedText(meta, Qt.ElideRight, int(r.right() - x - 14)))
+                       self.fm_meta.elidedText(meta, Qt.ElideRight, int(meta_w)))
         p.restore()
 
 
 class QueueView(QListView):
+    actionTriggered = pyqtSignal(str, dict)     # action_kind, job
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMouseTracking(True)
@@ -554,41 +659,126 @@ class QueueView(QListView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
 
+    def _hit_action(self, pos):
+        ix = self.indexAt(pos)
+        if not ix.isValid():
+            return ix, None, False
+        job = ix.data(QueueModel.JobRole)
+        d = self.itemDelegate()
+        spec = d.action_spec(job)
+        if spec is None:
+            return ix, job, False
+        rect = d.action_rect(self.visualRect(ix))
+        return ix, job, rect.contains(QPointF(pos))
+
     def mouseMoveEvent(self, e):
-        ix = self.indexAt(e.pos())
+        ix, _job, on_act = self._hit_action(e.pos())
         r = ix.row() if ix.isValid() else -1
         d = self.itemDelegate()
-        if d.hover_row != r:
-            old, d.hover_row = d.hover_row, r
-            for row in (old, r):
+        if d.hover_row != r or d.hover_action != on_act:
+            old = d.hover_row
+            d.hover_row = r
+            d.hover_action = on_act
+            if not on_act:
+                d.press_action = False
+            self.setCursor(Qt.PointingHandCursor if on_act else Qt.ArrowCursor)
+            for row in {old, r}:
                 if row >= 0:
                     self.update(self.model().index(row))
         super().mouseMoveEvent(e)
 
+    def mousePressEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            ix, _job, on_act = self._hit_action(e.pos())
+            if on_act:
+                d = self.itemDelegate()
+                d.press_action = True
+                self.update(ix)
+                return
+        super().mousePressEvent(e)
+
+    def mouseReleaseEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            d = self.itemDelegate()
+            was_pressed = d.press_action
+            d.press_action = False
+            ix, job, on_act = self._hit_action(e.pos())
+            if ix.isValid():
+                self.update(ix)
+            if was_pressed and on_act and job:
+                spec = d.action_spec(job)
+                if spec:
+                    self.actionTriggered.emit(spec[0], job)
+                return
+        super().mouseReleaseEvent(e)
+
     def leaveEvent(self, e):
         d = self.itemDelegate()
-        if d.hover_row >= 0:
-            old, d.hover_row = d.hover_row, -1
-            self.update(self.model().index(old))
+        if d.hover_row >= 0 or d.hover_action or d.press_action:
+            old = d.hover_row
+            d.hover_row = -1
+            d.hover_action = False
+            d.press_action = False
+            self.setCursor(Qt.ArrowCursor)
+            if old >= 0:
+                self.update(self.model().index(old))
         super().leaveEvent(e)
+
+    def paintEvent(self, e):
+        super().paintEvent(e)
+        p = QPainter(self.viewport())
+        draw_scroll_edge_fade(p, self.viewport().rect(), self.verticalScrollBar(), CARD, 16)
+        p.end()
 
 
 class EmptyState(QWidget):
-    """队列为空时的提示（整块自绘，没有子控件）。"""
+    """队列为空时的提示（整块自绘，支持拖放悬停时的缩放与高亮反馈）。"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._drag = 0.0
+        self._anim = QVariantAnimation(self)
+        self._anim.setDuration(DUR_POPOVER)
+        self._anim.setEasingCurve(ease_out())
+        self._anim.valueChanged.connect(self._on_anim)
+
+    def _on_anim(self, v):
+        self._drag = float(v)
+        self.update()
+
+    def setDragActive(self, active):
+        target = 1.0 if active else 0.0
+        if reduced_motion():
+            self._drag = target
+            self.update()
+            return
+        self._anim.stop()
+        self._anim.setStartValue(self._drag)
+        self._anim.setEndValue(target)
+        self._anim.start()
 
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         cx, cy = self.width() / 2.0, self.height() / 2.0 - 24
+
+        p.save()
+        if self._drag > 0.001:
+            sc = 1.0 + 0.08 * self._drag
+            p.translate(cx, cy)
+            p.scale(sc, sc)
+            p.translate(-cx, -cy)
         circle = QRectF(cx - 30, cy - 30, 60, 60)
-        p.setPen(Qt.NoPen)
-        p.setBrush(QColor("#FFF0F4"))
+        p.setPen(QPen(QColor(ACCENT), 1.5 * self._drag) if self._drag > 0.05 else Qt.NoPen)
+        p.setBrush(mix("#FFF0F4", "#FFE0E9", self._drag))
         p.drawEllipse(circle)
         p.drawPixmap(int(cx - 13), int(cy - 13), make_icon("download", ACCENT, 26))
-        p.setPen(QColor(INK))
+        p.restore()
+
+        p.setPen(QColor(ACCENT if self._drag > 0.5 else INK))
         p.setFont(ui_font(15, QFont.DemiBold))
-        p.drawText(QRectF(0, cy + 44, self.width(), 24), Qt.AlignHCenter | Qt.AlignVCenter,
-                   "粘贴链接，开始下载")
+        title = "松开鼠标，立即解析链接" if self._drag > 0.5 else "粘贴链接，开始下载"
+        p.drawText(QRectF(0, cy + 44, self.width(), 24), Qt.AlignHCenter | Qt.AlignVCenter, title)
         p.setPen(QColor(INK_3))
         p.setFont(ui_font(12))
         p.drawText(QRectF(0, cy + 72, self.width(), 20), Qt.AlignHCenter | Qt.AlignVCenter,
@@ -598,48 +788,154 @@ class EmptyState(QWidget):
         p.end()
 
 
-class Toast(QLabel):
-    """底部居中的轻提示，淡入淡出（普通 QLabel + 透明度效果，没有自绘冲突）。"""
+class Toast(QWidget):
+    """底部居中的 Sonner 风格轻提示（遵循 Emil Kowalski 的 Sonner 设计原则）：
+
+    1. 空间一致性：从底部 translateY(+14px) + scale(0.96) + opacity(0) 入场，
+       退场沿原路径回到 translateY(+10px)，入场 240ms、退场 180ms（非对称时序）。
+    2. 可打断性（Interruptible）：动画途中再次触发时，从当前实时位置与宽度平滑重定向。
+    3. 边缘体验：鼠标悬停在 Toast 上时自动暂停倒计时，移开后恢复；点击即可立即关闭。
+    4. 语义图标：根据消息内容自动匹配成功（绿勾）、警告（橙叹号）或提示（粉标）图标。
+    """
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.setStyleSheet("background: rgba(24,25,28,0.9); color: #FFFFFF; border-radius: 10px;"
-                           "padding: 9px 16px; font-size: 13px;")
-        self.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self._fx = QGraphicsOpacityEffect(self)
-        self._fx.setOpacity(0.0)
-        self.setGraphicsEffect(self._fx)
-        self._anim = QPropertyAnimation(self._fx, b"opacity", self)
-        self._anim.setDuration(180)
+        self.setCursor(Qt.PointingHandCursor)
+        self._text = ""
+        self._kind = "info"
+        self._progress = 0.0      # 0.0 = 隐藏, 1.0 = 完全展现
+        self._closing = False
+        self._remain_ms = 2200
+        self._font = ui_font(13, QFont.Medium)
+
+        self._anim = QVariantAnimation(self)
+        self._anim.setEasingCurve(ease_out())
+        self._anim.valueChanged.connect(self._on_anim)
+        self._anim.finished.connect(self._on_anim_done)
+
         self._hide_timer = QTimer(self)
         self._hide_timer.setSingleShot(True)
-        self._hide_timer.timeout.connect(lambda: self._fade(0.0))
-        self._anim.finished.connect(self._on_anim_done)
+        self._hide_timer.timeout.connect(self._start_close)
         self.hide()
 
+    @staticmethod
+    def _infer_kind(text):
+        if any(k in text for k in ("失败", "错误", "失效", "不可用")):
+            return "warn"
+        if any(k in text for k in ("完成", "成功", "已复制", "已加入")):
+            return "ok"
+        if "剪贴板" in text or "粘贴" in text:
+            return "paste"
+        return "info"
+
+    def _on_anim(self, v):
+        self._progress = float(v)
+        self._reposition()
+        self.update()
+
     def _on_anim_done(self):
-        if self._fx.opacity() <= 0.01:
+        if self._closing and self._progress <= 0.01:
             self.hide()
 
-    def _fade(self, to):
+    def _start_close(self):
+        self._closing = True
         self._anim.stop()
-        self._anim.setStartValue(self._fx.opacity())
-        self._anim.setEndValue(to)
+        self._anim.setDuration(0 if reduced_motion() else DUR_TOAST_OUT)
+        self._anim.setStartValue(self._progress)
+        self._anim.setEndValue(0.0)
         self._anim.start()
 
-    def show_message(self, text, ms=2200):
-        self.setText(text)
-        self.adjustSize()
+    def enterEvent(self, e):
+        # Sonner 原则：鼠标悬停时暂停自动消失计时
+        if self._hide_timer.isActive():
+            self._remain_ms = max(800, self._hide_timer.remainingTime())
+            self._hide_timer.stop()
+        super().enterEvent(e)
+
+    def leaveEvent(self, e):
+        if not self._closing and self.isVisible():
+            self._hide_timer.start(self._remain_ms)
+        super().leaveEvent(e)
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            self._hide_timer.stop()
+            self._start_close()
+
+    def _reposition(self):
         par = self.parentWidget()
-        self.move((par.width() - self.width()) // 2, par.height() - self.height() - 28)
+        if not par:
+            return
+        base_y = par.height() - self.height() - 22
+        offset_y = 0 if reduced_motion() else int((1.0 - self._progress) * (10 if self._closing else 14))
+        self.move((par.width() - self.width()) // 2, base_y + offset_y)
+
+    def show_message(self, text, ms=2200, kind=None):
+        self._text = str(text or "")
+        self._kind = kind or self._infer_kind(self._text)
+        self._remain_ms = ms
+        self._closing = False
+        fm = QFontMetrics(self._font)
+        tw = fm.horizontalAdvance(self._text)
+        w = min(520, max(140, tw + 16 + 8 + 34 + 12))
+        self.setFixedSize(w, 46)
+        self._reposition()
         self.show()
         self.raise_()
-        self._fade(1.0)
+        self._anim.stop()
+        self._anim.setDuration(0 if reduced_motion() else DUR_TOAST_IN)
+        self._anim.setStartValue(self._progress)
+        self._anim.setEndValue(1.0)
+        self._anim.start()
         self._hide_timer.start(ms)
+
+    def paintEvent(self, e):
+        if self._progress <= 0.001:
+            return
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setOpacity(max(0.0, min(1.0, self._progress)))
+        r = QRectF(self.rect()).adjusted(4, 3, -4, -5)
+
+        if not reduced_motion():
+            sc = 0.96 + 0.04 * self._progress
+            p.translate(r.center())
+            p.scale(sc, sc)
+            p.translate(-r.center())
+
+        # 柔和底部投影
+        p.setPen(Qt.NoPen)
+        for dy, alpha in ((3.0, 22), (1.5, 38)):
+            p.setBrush(QColor(15, 20, 30, alpha))
+            p.drawRoundedRect(r.adjusted(-1, dy, 1, dy + 1), 12, 12)
+
+        # 深色磨砂质感底 + 顶部微亮高光边
+        p.setBrush(QColor(24, 25, 28, 240))
+        p.setPen(QPen(QColor(255, 255, 255, 30), 1))
+        p.drawRoundedRect(r, 11, 11)
+
+        ic_map = {
+            "ok": ("check", GREEN),
+            "warn": ("warning", ORANGE),
+            "paste": ("paste", ACCENT),
+            "info": ("info", ACCENT),
+        }
+        ic_name, ic_col = ic_map.get(self._kind, ("info", ACCENT))
+        p.drawPixmap(QPointF(r.left() + 14, r.center().y() - 8), make_icon(ic_name, ic_col, 16))
+
+        p.setFont(self._font)
+        p.setPen(QColor("#F6F7F8"))
+        fm = QFontMetrics(self._font)
+        tx = r.left() + 38
+        tw = r.right() - tx - 14
+        p.drawText(QRectF(tx, r.top(), tw, r.height()),
+                   Qt.AlignVCenter | Qt.AlignLeft,
+                   fm.elidedText(self._text, Qt.ElideRight, int(tw)))
+        p.end()
 
 
 class PathButton(Button):
-    """显示保存目录的按钮：路径太长时中间省略。"""
+    """显示保存目录的按钮：路径太长时中间省略（break-ui：文件名与路径保留首尾特征）。"""
 
     MAX_W = 340
 
@@ -703,6 +999,7 @@ class SettingsDialog(QDialog):
         btns.addWidget(cancel)
         btns.addWidget(ok)
         root.addLayout(btns)
+        animate_dialog_open(self)
 
 
 # ---------------------------------------------------------------- 主窗口
@@ -754,7 +1051,8 @@ class MainWindow(QMainWindow):
         root.addLayout(head)
 
         # ---- 输入卡 ----
-        card = Card(padding=(18, 18, 18, 16))
+        self.input_card = Card(padding=(18, 18, 18, 16))
+        card = self.input_card
         card.layout.setSpacing(14)
         row = QHBoxLayout()
         row.setSpacing(10)
@@ -812,6 +1110,7 @@ class MainWindow(QMainWindow):
         qhead.addSpacing(8)
         self.summary = QLabel("")
         self.summary.setObjectName("muted")
+        self.summary.setFont(tabular_font(12))
         qhead.addWidget(self.summary)
         qhead.addStretch(1)
         self.btn_clear = Button("清除已完成", "ghost", "trash", height=32)
@@ -836,6 +1135,7 @@ class MainWindow(QMainWindow):
         self.list.setItemDelegate(self.delegate)
         self.list.setModel(self.model)
         self.list.doubleClicked.connect(self._on_double_click)
+        self.list.actionTriggered.connect(self._on_row_action)
         self.list.customContextMenuRequested.connect(self._on_context_menu)
         page_q.addWidget(self.list)
         self.page_q = page_q
@@ -867,7 +1167,7 @@ class MainWindow(QMainWindow):
         self._speed_timer.setInterval(500)
         self._speed_timer.timeout.connect(self._tick_speed)
 
-        # 菜单
+        # 菜单（快捷键全部直接响应，遵循 Emil Kowalski "Never animate keyboard-initiated actions"）
         m = self.menuBar().addMenu("文件")
         a = m.addAction("解析剪贴板里的链接", self._paste_and_browse)
         a.setShortcut(QKeySequence("Ctrl+Shift+V"))
@@ -888,25 +1188,10 @@ class MainWindow(QMainWindow):
         self._switch_tab(0)
         self._refresh_summary()
 
-    def showEvent(self, e):
-        super().showEvent(e)
-        if not getattr(self, "_shown_once", False):
-            self._shown_once = True
-            # 入场：整窗快速渐显（顶层窗口的 windowOpacity，开销很小）
-            self.setWindowOpacity(0.0)
-            self._intro = QPropertyAnimation(self, b"windowOpacity", self)
-            self._intro.setDuration(200)
-            self._intro.setStartValue(0.0)
-            self._intro.setEndValue(1.0)
-            self._intro.setEasingCurve(QEasingCurve.OutCubic)
-            self._intro.start()
-
     def resizeEvent(self, e):
         super().resizeEvent(e)
         if self.toast.isVisible():
-            par = self.toast.parentWidget()
-            self.toast.move((par.width() - self.toast.width()) // 2,
-                            par.height() - self.toast.height() - 28)
+            self.toast._reposition()
 
     def _switch_tab(self, i):
         self.stack.setCurrentIndex(i)
@@ -941,7 +1226,7 @@ class MainWindow(QMainWindow):
         self.url_edit.setProperty("autofilled", True)
         self.url_edit.setFocus()
         self.url_edit.selectAll()
-        self.toast.show_message("已识别剪贴板里的链接，回车即可解析")
+        self.toast.show_message("已识别剪贴板里的链接，回车即可解析", kind="paste")
 
     def _paste_clipboard(self):
         text = (QApplication.clipboard().text() or "").strip()
@@ -957,8 +1242,17 @@ class MainWindow(QMainWindow):
     def dragEnterEvent(self, e):
         if e.mimeData().hasText() or e.mimeData().hasUrls():
             e.acceptProposedAction()
+            self.input_card.setHighlight(True)
+            self.empty.setDragActive(True)
+
+    def dragLeaveEvent(self, e):
+        self.input_card.setHighlight(False)
+        self.empty.setDragActive(False)
+        super().dragLeaveEvent(e)
 
     def dropEvent(self, e):
+        self.input_card.setHighlight(False)
+        self.empty.setDragActive(False)
         md = e.mimeData()
         text = md.urls()[0].toString() if md.hasUrls() else md.text()
         text = (text or "").strip()
@@ -970,7 +1264,8 @@ class MainWindow(QMainWindow):
     def _set_login_state(self, nickname):
         self._nickname = nickname or ""
         self.account.setName(nickname or None)
-        self.account.setToolTip("" if nickname else "扫码登录，解锁 1080P 及以上画质")
+        self.account.setToolTip(("已登录：%s（点击管理账号）" % nickname) if nickname
+                                else "扫码登录，解锁 1080P 及以上画质")
 
     def _on_account(self):
         if not self.account.name():
@@ -992,7 +1287,7 @@ class MainWindow(QMainWindow):
         self._cookie = ""
         self._set_login_state(None)
         self.append_log("已退出登录")
-        self.toast.show_message("已退出登录")
+        self.toast.show_message("已退出登录", kind="info")
         self._save_settings()
 
     def on_login(self):
@@ -1003,7 +1298,7 @@ class MainWindow(QMainWindow):
         self._cookie = dlg.cookie
         self._set_login_state(dlg.nickname or "已登录")
         self.append_log("登录成功：%s（高清画质已解锁）" % (dlg.nickname or ""))
-        self.toast.show_message("登录成功，已解锁高清画质")
+        self.toast.show_message("登录成功，已解锁高清画质", kind="ok")
         self._save_settings()      # 立刻存盘，别等退出时才写
 
     def _check_login(self):
@@ -1024,7 +1319,7 @@ class MainWindow(QMainWindow):
         elif state == "invalid":
             self._cookie = ""
             self._set_login_state(None)
-            self.toast.show_message("登录已失效，请重新扫码登录", 3500)
+            self.toast.show_message("登录已失效，请重新扫码登录", 3500, kind="warn")
             self._save_settings()
 
     def on_settings(self):
@@ -1077,7 +1372,12 @@ class MainWindow(QMainWindow):
 
     def on_copy_log(self):
         QApplication.clipboard().setText(self.log_view.toPlainText())
-        self.toast.show_message("日志已复制")
+        # Emil Kowalski 状态指示：复制按钮瞬时切换为对勾与「已复制」
+        self.btn_copy.setIconKind("check")
+        self.btn_copy.setText("已复制")
+        QTimer.singleShot(1400, lambda: (self.btn_copy.setIconKind("copy"),
+                                         self.btn_copy.setText("复制")))
+        self.toast.show_message("日志已复制", kind="ok")
 
     def on_clear_log(self):
         self.log_view.clear()
@@ -1094,13 +1394,11 @@ class MainWindow(QMainWindow):
         url = self.url_edit.text().strip()
         if not url:
             self.url_edit.setFocus()
-            self.toast.show_message("先粘贴一个 B 站链接")
+            self.toast.show_message("先粘贴一个 B 站链接", kind="info")
             return
         if self._preview_thread is not None and self._preview_thread.isRunning():
             return
-        self.btn_start.setEnabled(False)
-        self.btn_start.setText("解析中")
-        self.btn_start.setIconKind(None)
+        self.btn_start.setLoading(True, "解析中")
         self._preview_url = url
         t = PreviewThread(url, self._cookie, self._proxy, self)
         t.done.connect(self._on_preview)
@@ -1109,8 +1407,7 @@ class MainWindow(QMainWindow):
         t.start()
 
     def _reset_browse_button(self):
-        self.btn_start.setEnabled(True)
-        self.btn_start.setText("解析")
+        self.btn_start.setLoading(False, "解析")
         self.btn_start.setIconKind("search")
 
     def _on_preview_failed(self, msg):
@@ -1153,10 +1450,12 @@ class MainWindow(QMainWindow):
         self.page_q.setCurrentIndex(1)
         if self.seg.index() != 0:
             self.seg.setIndex(0)
+        if not self._anim_timer.isActive():
+            self._anim_timer.start()
         self._submit(jobs)
         self._refresh_summary()
         if len(jobs) > 1 or self.dl_thread is not None:
-            self.toast.show_message("已加入下载队列：%d 个" % len(jobs))
+            self.toast.show_message("已加入下载队列：%d 个" % len(jobs), kind="ok")
 
     def _submit(self, jobs):
         t = self.dl_thread
@@ -1234,6 +1533,8 @@ class MainWindow(QMainWindow):
         if stage in ("合并", "转封装"):
             job["state"] = "merge"
             job["speed"] = 0
+            if not self._anim_timer.isActive():
+                self._anim_timer.start()
         else:
             job["stage"] = "连接中"
         self.model.touch(jid)
@@ -1262,8 +1563,11 @@ class MainWindow(QMainWindow):
                     size = os.path.getsize(path)
             except OSError:
                 pass
-            job.update(state="done", path=path, size=size, shown=100.0, target=100.0, speed=0)
+            job.update(state="done", path=path, size=size, shown=100.0, target=100.0,
+                       speed=0, done_t=time.monotonic())
             self.model.touch(jid)
+            if not self._anim_timer.isActive():
+                self._anim_timer.start()
         self.append_log("完成：%s" % path)
         self._refresh_summary()
         self._maybe_all_done()
@@ -1291,28 +1595,52 @@ class MainWindow(QMainWindow):
         ok = sum(1 for j in jobs if j["state"] == "done")
         bad = sum(1 for j in jobs if j["state"] == "fail")
         if ok and not bad:
-            self.toast.show_message("全部下载完成")
+            self.toast.show_message("全部下载完成", kind="ok")
             QApplication.alert(self)      # 窗口在后台时让 Dock 图标跳一下
         elif bad:
-            self.toast.show_message("%d 个失败，右键可以重试" % bad, 3000)
+            self.toast.show_message("%d 个失败，悬停或右键可重试" % bad, 3000, kind="warn")
 
     # ---- 动画 / 速度 ----
     def _tick_progress(self):
         moving = False
+        now = time.monotonic()
         for job in self.model.jobs:
-            if job["state"] not in ("run", "merge"):
-                continue
-            tgt, cur = job.get("target", 0.0), job.get("shown", 0.0)
-            if abs(tgt - cur) < 0.05:
-                continue
-            nxt = cur + (tgt - cur) * 0.18
-            if abs(tgt - nxt) < 0.05:
-                nxt = tgt
-            job["shown"] = nxt
-            moving = True
-            r = self.model.row_of(job["id"])
-            if r is not None:
-                self.list.update(self.model.index(r))
+            row_dirty = False
+            # 1. 新行入场错峰微动画
+            if job.get("enter_t") is not None:
+                if now - job["enter_t"] < 0.24:
+                    moving = True
+                    row_dirty = True
+                else:
+                    job.pop("enter_t", None)
+                    row_dirty = True
+            # 2. 完成态绿勾微弹入场
+            if job.get("done_t") is not None:
+                if now - job["done_t"] < 0.24:
+                    moving = True
+                    row_dirty = True
+                else:
+                    job.pop("done_t", None)
+                    row_dirty = True
+            # 3. 合并态动态旋转弧
+            if job["state"] == "merge":
+                job["merge_angle"] = (job.get("merge_angle", 0.0) + 7.5) % 360.0
+                moving = True
+                row_dirty = True
+            # 4. 下载进度平滑插值
+            elif job["state"] == "run":
+                tgt, cur = job.get("target", 0.0), job.get("shown", 0.0)
+                if abs(tgt - cur) >= 0.05:
+                    nxt = cur + (tgt - cur) * 0.18
+                    if abs(tgt - nxt) < 0.05:
+                        nxt = tgt
+                    job["shown"] = nxt
+                    moving = True
+                    row_dirty = True
+            if row_dirty:
+                r = self.model.row_of(job["id"])
+                if r is not None:
+                    self.list.update(self.model.index(r))
         if not moving:
             self._anim_timer.stop()
 
@@ -1339,6 +1667,7 @@ class MainWindow(QMainWindow):
         jobs = self.model.jobs
         if not jobs:
             self.summary.setText("")
+            self.seg.setBadge(0, "")
             self.btn_stop.setEnabled(False)
             self.btn_clear.setEnabled(False)
             return
@@ -1346,6 +1675,7 @@ class MainWindow(QMainWindow):
         done = sum(1 for j in jobs if j["state"] == "done")
         fail = sum(1 for j in jobs if j["state"] == "fail")
         active = sum(1 for j in jobs if j["state"] in ("wait", "run", "merge"))
+        self.seg.setBadge(0, str(active if active else n))
         if active:
             if speed is None:
                 speed = sum(j.get("speed") or 0 for j in jobs if j["state"] == "run")
@@ -1379,6 +1709,14 @@ class MainWindow(QMainWindow):
         if not self.model.jobs:
             self.page_q.setCurrentIndex(0)
         self._refresh_summary()
+
+    def _on_row_action(self, kind, job):
+        if kind == "reveal" and job.get("path"):
+            reveal_in_file_manager(job["path"])
+        elif kind == "retry":
+            self._retry([job])
+        elif kind == "cancel":
+            self._cancel_job(job)
 
     def _on_double_click(self, ix):
         job = ix.data(QueueModel.JobRole)

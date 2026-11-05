@@ -4,14 +4,21 @@
 
 以前取二维码、轮询、查昵称全在界面线程里做：每 2 秒一次网络请求，
 网络稍慢窗口就僵住（最长 15 秒）。现在全部放到后台线程，界面只收结果。
+
+设计工程与动效升级（Emil Kowalski Design Engineering）：
+  * 二维码加载完成时采用 scale(0.95) -> scale(1.0) + opacity(0 -> 1) 的 180ms --ease-out 入场。
+  * 已扫码 / 二维码失效 / 登录成功时，二维码上方柔和浮现半透明磨砂遮罩与矢量状态徽章，
+    让状态切换清晰直观，不再靠生硬清掉图片写纯文字。
 """
 
-from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout
+from PyQt5.QtCore import QPointF, QRectF, Qt, QThread, QTimer, QVariantAnimation, pyqtSignal
+from PyQt5.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QPixmap
+from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QWidget
 
 import bilifetch_login as login_mod
-from bilifetch_ui import Button, Card, Spinner
+from bilifetch_ui import (ACCENT, FIELD, GREEN, INK, INK_2, INK_3, LINE, Button, Card,
+                          Spinner, animate_dialog_open, ease_out, make_icon,
+                          reduced_motion, ui_font)
 
 _orphans = []     # 对话框关了但线程还在等网络：先挂在这里，跑完再释放
 
@@ -73,6 +80,133 @@ class QrThread(QThread):
             self.state.emit(st, msg)
 
 
+class QrBox(QWidget):
+    """二维码展示框：支持 scale(0.95)->1.0 入场过渡与扫码/过期状态遮罩。"""
+
+    def __init__(self, size=220, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(size, size)
+        self._pm = None
+        self._enter_prog = 0.0
+        self._overlay_mode = None      # None / "scanned" / "expired" / "done"
+        self._overlay_prog = 0.0
+
+        self._enter_anim = QVariantAnimation(self)
+        self._enter_anim.setDuration(180)
+        self._enter_anim.setEasingCurve(ease_out())
+        self._enter_anim.valueChanged.connect(self._on_enter)
+
+        self._ov_anim = QVariantAnimation(self)
+        self._ov_anim.setDuration(180)
+        self._ov_anim.setEasingCurve(ease_out())
+        self._ov_anim.valueChanged.connect(self._on_ov)
+
+    def _on_enter(self, v):
+        self._enter_prog = float(v)
+        self.update()
+
+    def _on_ov(self, v):
+        self._overlay_prog = float(v)
+        self.update()
+
+    def clear(self):
+        self._pm = None
+        self._overlay_mode = None
+        self._enter_prog = 0.0
+        self._overlay_prog = 0.0
+        self.update()
+
+    def setText(self, text):
+        if "失效" in (text or ""):
+            self.setOverlay("expired")
+
+    def setPixmap(self, pm):
+        self._pm = pm
+        self._overlay_mode = None
+        self._overlay_prog = 0.0
+        if reduced_motion():
+            self._enter_prog = 1.0
+            self.update()
+        else:
+            self._enter_anim.stop()
+            self._enter_anim.setStartValue(0.0)
+            self._enter_anim.setEndValue(1.0)
+            self._enter_anim.start()
+
+    def setOverlay(self, mode):
+        if self._overlay_mode == mode:
+            return
+        self._overlay_mode = mode
+        if mode is None:
+            self._overlay_prog = 0.0
+            self.update()
+            return
+        if reduced_motion():
+            self._overlay_prog = 1.0
+            self.update()
+        else:
+            self._ov_anim.stop()
+            self._ov_anim.setStartValue(0.0)
+            self._ov_anim.setEndValue(1.0)
+            self._ov_anim.start()
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        r = QRectF(self.rect())
+
+        p.setPen(QPen(QColor(LINE if self._pm else "transparent"), 1))
+        p.setBrush(QColor("#FFFFFF" if self._pm else FIELD))
+        p.drawRoundedRect(r.adjusted(0.5, 0.5, -0.5, -0.5), 12, 12)
+
+        if self._pm is not None:
+            p.save()
+            p.setOpacity(self._enter_prog)
+            if not reduced_motion():
+                sc = 0.95 + 0.05 * self._enter_prog
+                p.translate(r.center())
+                p.scale(sc, sc)
+                p.translate(-r.center())
+            side = self.width() - 16
+            p.drawPixmap(QRectF(8, 8, side, side).toRect(), self._pm)
+            p.restore()
+
+        if self._overlay_mode and self._overlay_prog > 0.01:
+            p.save()
+            p.setOpacity(self._overlay_prog)
+            path = QPainterPath()
+            path.addRoundedRect(r.adjusted(1, 1, -1, -1), 11, 11)
+            p.fillPath(path, QColor(255, 255, 255, 228))
+
+            cx, cy = r.center().x(), r.center().y() - 10
+            if not reduced_motion():
+                sc = 0.92 + 0.08 * self._overlay_prog
+                p.translate(cx, cy)
+                p.scale(sc, sc)
+                p.translate(-cx, -cy)
+
+            badge = QRectF(cx - 22, cy - 22, 44, 44)
+            p.setPen(Qt.NoPen)
+            if self._overlay_mode in ("scanned", "done"):
+                p.setBrush(QColor("#E9F8F0"))
+                p.drawEllipse(badge)
+                p.drawPixmap(QPointF(cx - 11, cy - 11), make_icon("check", GREEN, 22))
+                label = "登录成功" if self._overlay_mode == "done" else "已扫码，待手机确认"
+                col = INK
+            else:
+                p.setBrush(QColor(FIELD))
+                p.drawEllipse(badge)
+                p.drawPixmap(QPointF(cx - 10, cy - 10), make_icon("retry", INK_2, 20))
+                label = "二维码已失效"
+                col = INK_2
+
+            p.setPen(QColor(col))
+            p.setFont(ui_font(13, QFont.DemiBold))
+            p.drawText(QRectF(0, cy + 30, r.width(), 22), Qt.AlignCenter, label)
+            p.restore()
+        p.end()
+
+
 class LoginDialog(QDialog):
     """显示二维码，轮询登录状态，成功后把 cookie 交给调用方。"""
 
@@ -103,10 +237,7 @@ class LoginDialog(QDialog):
         lay.addWidget(tip)
         lay.addSpacing(6)
 
-        self.qr = QLabel()
-        self.qr.setFixedSize(220, 220)
-        self.qr.setAlignment(Qt.AlignCenter)
-        self.qr.setStyleSheet("background:#F6F7F8; border-radius:12px;")
+        self.qr = QrBox(220)
         self.spinner = Spinner(26, parent=self.qr)
         self.spinner.move((220 - 26) // 2, (220 - 26) // 2)
         lay.addWidget(self.qr, 0, Qt.AlignHCenter)
@@ -128,12 +259,12 @@ class LoginDialog(QDialog):
         lay.addWidget(perk)
 
         root.addWidget(card)
+        animate_dialog_open(self)
         QTimer.singleShot(0, self._new_qr)
 
     def _new_qr(self):
         self._stop_thread()
         self.qr.clear()
-        self.qr.setText("")
         self.spinner.show()
         self.status.setText("正在获取二维码…")
         self.btn_refresh.setEnabled(False)
@@ -158,29 +289,30 @@ class LoginDialog(QDialog):
         pm = pm.scaled(int(side * dpr), int(side * dpr), Qt.KeepAspectRatio,
                        Qt.SmoothTransformation)
         pm.setDevicePixelRatio(dpr)
-        self.qr.setStyleSheet("background:#FFFFFF; border-radius:12px;")
         self.qr.setPixmap(pm)
         self.status.setText("等待扫码…")
         self.btn_refresh.setEnabled(True)
 
     def _on_state(self, st, msg):
         if st == login_mod.SCANNED:
+            self.qr.setOverlay("scanned")
             self.status.setText("已扫码，请在手机上点「确认登录」")
         elif st == login_mod.WAITING:
+            self.qr.setOverlay(None)
             self.status.setText("等待扫码…")
         elif st == login_mod.EXPIRED:
+            self.qr.setOverlay("expired")
             self.status.setText("二维码已失效，点「刷新二维码」重试")
-            self.qr.setStyleSheet("background:#F6F7F8; border-radius:12px; color:#9499A0;")
-            self.qr.setText("已失效")
         else:
             self.status.setText(msg)
 
     def _on_success(self, cookie, name):
         self.cookie = cookie
         self.nickname = name
+        self.qr.setOverlay("done")
         self.status.setText("登录成功：%s" % name)
         self.btn_refresh.setEnabled(False)
-        QTimer.singleShot(600, self.accept)
+        QTimer.singleShot(550, self.accept)
 
     def _on_failed(self, msg):
         self.spinner.hide()
@@ -213,4 +345,3 @@ def _release(t):
     t.wait()
     if t in _orphans:
         _orphans.remove(t)
-

@@ -6,7 +6,7 @@ on:
       tag:
         description: "Release tag to upload assets to"
         required: false
-        default: "v1.1.0"
+        default: "v1.2.0"
   push:
     tags:
       - "v*"
@@ -58,6 +58,7 @@ jobs:
         run: |
           TAG="${{ github.event.inputs.tag || github.ref_name }}"
           if [[ "$TAG" == v* ]]; then
+            gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "BiliFetch $TAG" --generate-notes
             gh release upload "$TAG" dist/BiliFetch-*-Windows-x64.zip --clobber
           fi
 
@@ -92,5 +93,6 @@ jobs:
         run: |
           TAG="${{ github.event.inputs.tag || github.ref_name }}"
           if [[ "$TAG" == v* ]]; then
+            gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "BiliFetch $TAG" --generate-notes
             gh release upload "$TAG" dist/BiliFetch-*-Linux-x64.tar.gz --clobber
           fi

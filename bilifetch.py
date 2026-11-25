@@ -34,7 +34,7 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
 
 API = "https://api.bilibili.com"
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 # 画质 id -> 名称（B 站官方编码）
 QN_NAME = {

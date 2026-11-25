@@ -4,7 +4,7 @@
 的 API 调用流程重写的**图形界面 + 命令行**跨平台版本：
 - **macOS**：自包含的 `.app`（`.dmg` 镜像，双击即用，无需装 Python）及 `.pkg` 命令行安装包；
 - **Linux**：Debian/Ubuntu `.deb` 安装包及通用发行版 `.tar.gz`（含桌面菜单图标与 `bilifetch-gui`）；
-- **Windows**：免安装独立版 `BiliFetch-1.1.0-Windows-x64.zip`（含 `BiliFetch.exe` + `ffmpeg.exe`）及轻量脚本包 `BiliFetch-1.1.0-Windows.zip`。
+- **Windows**：免安装独立版 `BiliFetch-1.2.0-Windows-x64.zip`（含 `BiliFetch.exe` + `ffmpeg.exe`）及轻量脚本包 `BiliFetch-1.2.0-Windows.zip`。
 
 ![界面](docs/screenshot.png)
 
@@ -18,7 +18,7 @@
 
 ### macOS —— 下载 `.dmg`
 
-1. 打开 `BiliFetch-1.1.0-macOS.dmg`
+1. 打开 `BiliFetch-1.2.0-macOS.dmg`
 2. 把 **BiliFetch.app** 拖到右边的 **Applications** 图标上
 3. 装完在「应用程序」里就有图标了 —— 双击打开就是图形界面，
    粘贴 B 站链接 → 点「开始下载」→ 下面看进度条和日志
@@ -47,24 +47,24 @@ sudo ./便携版/install.sh
 **Debian / Ubuntu / Mint（推荐 `.deb`）**
 
 ```bash
-sudo apt install ./bilifetch_1.1.0_all.deb
+sudo apt install ./bilifetch_1.2.0_all.deb
 # 或者
-sudo dpkg -i bilifetch_1.1.0_all.deb
+sudo dpkg -i bilifetch_1.2.0_all.deb
 ```
 
 **Arch / Fedora / openSUSE 等任意发行版（通用 `.tar.gz`）**
 
 ```bash
-tar -xzf BiliFetch-1.1.0-Linux.tar.gz
-cd BiliFetch-1.1.0-Linux && sudo ./install.sh
+tar -xzf BiliFetch-1.2.0-Linux.tar.gz
+cd BiliFetch-1.2.0-Linux && sudo ./install.sh
 ```
 
 装完在应用菜单里能找到 **BiliFetch**（图形界面，命令 `bilifetch-gui`），终端里也能用 `bilifetch`。
 
 ### Windows —— 下载 `.zip`
 
-- **免安装独立版（`BiliFetch-1.1.0-Windows-x64.zip`）**：解压后直接双击 `BiliFetch.exe` 即可打开图形界面（内置 Python 运行时与 `ffmpeg.exe`）。
-- **轻量便携版（`BiliFetch-1.1.0-Windows.zip`）**：已装 Python 的机器可双击 `一键安装依赖与桌面快捷方式.bat`，自动配置依赖并在桌面生成带小狐狸图标的快捷方式；也可双击 `打包独立exe.bat` 在本地生成单文件 `BiliFetch.exe`。
+- **免安装独立版（`BiliFetch-1.2.0-Windows-x64.zip`）**：解压后直接双击 `BiliFetch.exe` 即可打开图形界面（内置 Python 运行时与 `ffmpeg.exe`）。
+- **轻量便携版（`BiliFetch-1.2.0-Windows.zip`）**：已装 Python 的机器可双击 `一键安装依赖与桌面快捷方式.bat`，自动配置依赖并在桌面生成带小狐狸图标的快捷方式；也可双击 `打包独立exe.bat` 在本地生成单文件 `BiliFetch.exe`。
 
 ### 依赖
 
@@ -333,9 +333,9 @@ python3 bilifetch.py "https://www.bilibili.com/bangumi/play/ep1633643" --list
 
 ```
 dist/
-├── BiliFetch-1.1.0-macOS.dmg    # macOS 镜像（.app + /Applications 软链 + 便携版 + 说明）
-├── BiliFetch-1.1.0-cli.pkg       # macOS 命令行版原生安装包（次选，见 Gatekeeper 说明）
-├── bilifetch_1.1.0_all.deb          # Linux 安装包（含图形界面 + 菜单入口）
+├── BiliFetch-1.2.0-macOS.dmg    # macOS 镜像（.app + /Applications 软链 + 便携版 + 说明）
+├── BiliFetch-1.2.0-cli.pkg       # macOS 命令行版原生安装包（次选，见 Gatekeeper 说明）
+├── bilifetch_1.2.0_all.deb          # Linux 安装包（含图形界面 + 菜单入口）
 └── SHA256SUMS
 ```
 

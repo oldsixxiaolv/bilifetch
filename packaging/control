@@ -1,11 +1,11 @@
 Package: bilifetch
-Version: 1.1.0
+Version: 1.2.0
 Section: utils
 Priority: optional
 Architecture: all
 Depends: python3 (>= 3.7), python3-requests, python3-pyqt5, python3-qrcode, ffmpeg
-Maintainer: Yihang Lyu (Lvyihanghh) <lvyihanghh@users.noreply.github.com>
-Homepage: https://github.com/Lvyihanghh
+Maintainer: Yihang Lyu (oldsixxiaolv) <oldsixxiaolv@users.noreply.github.com>
+Homepage: https://github.com/oldsixxiaolv/bilifetch
 Description: B 站视频下载器（图形界面 + 命令行）
  支持输入 B 站链接（番剧 ep/ss、普通视频 av/bv、b23.tv 短链），
  自动解析清晰度、并发分段下载音视频流，并用 ffmpeg 合并为 mp4。

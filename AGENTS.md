@@ -13,3 +13,7 @@ Uses the five canonical triage labels (`needs-triage`, `needs-info`, `ready-for-
 ### Domain docs
 
 Single-context layout (`GLOSSARY.md` at the repo root and ADRs in `docs/adr/`). See `docs/agents/domain.md`.
+
+## Git remotes & push rule
+
+The canonical GitHub remote for this workspace is `origin` -> `oldsixxiaolv/bilifetch` (`git@github.com:oldsixxiaolv/bilifetch.git`). Before running any `git push`, always state the exact target remote, `<owner>/<repo>`, and branch to the user first.

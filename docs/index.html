@@ -12,19 +12,23 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23FFF3E8'/%3E%3Cpolygon points='24,42 14,10 44,28' fill='%23E57A35'/%3E%3Cpolygon points='76,42 86,10 56,28' fill='%23E57A35'/%3E%3Cellipse cx='50' cy='55' rx='30' ry='28' fill='%23E57A35'/%3E%3Cpath d='M50 90 L31 60 Q50 46 69 60 Z' fill='%23FFF9F2'/%3E%3Cellipse cx='37.5' cy='53' rx='4.5' ry='5.5' fill='%232B211B'/%3E%3Cellipse cx='62.5' cy='53' rx='4.5' ry='5.5' fill='%232B211B'/%3E%3Cellipse cx='50' cy='61.5' rx='4.5' ry='3.5' fill='%23C94A6A'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet" /></noscript>
 
   <style>
     /* ================================================================
        Swiss Editorial + Warm Alabaster Craftsmanship
-       简洁而不失典雅，高效而不华丽
+       简洁而不失典雅，高效而不华丽 · Motion by Emil Kowalski Principles
        ================================================================ */
     :root {
       --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Noto Sans CJK SC", sans-serif;
       --font-serif: "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
       --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-      --ease-calm: cubic-bezier(0.22, 1, 0.36, 1);
+      /* Canonical Emil Kowalski easing tokens */
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+      --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
     }
 
     /* Warm Alabaster Light Theme (Default) */
@@ -48,9 +52,19 @@
       --btn-primary-bg: #161615;
       --btn-primary-hover: #2C2B29;
       --btn-primary-fg: #FAF9F6;
+      --btn-primary-rim: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 1px 2px rgba(22, 22, 21, 0.16), 0 3px 8px -2px rgba(22, 22, 21, 0.10);
+      --btn-primary-rim-active: inset 0 1px 2px rgba(0, 0, 0, 0.28), 0 0 0 rgba(22, 22, 21, 0);
+
+      --keycap-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 1px 0 rgba(22, 22, 21, 0.08), 0 2px 4px -1px rgba(22, 22, 21, 0.04);
+      --keycap-shadow-active: inset 0 1px 2px rgba(22, 22, 21, 0.08), 0 0 0 rgba(22, 22, 21, 0);
+
+      --kbd-bg: #EFECE5;
+      --kbd-border: #D8D3C8;
+      --kbd-shadow: 0 1px 0 #C9C3B7;
 
       --ok: #237B52;
       --ok-soft: #E9F4EE;
+      --ok-border: #BBDAC9;
       --warn: #B86B19;
 
       --nav-bg: rgba(250, 249, 246, 0.86);
@@ -79,9 +93,19 @@
       --btn-primary-bg: #EFECE6;
       --btn-primary-hover: #DCD8CF;
       --btn-primary-fg: #131312;
+      --btn-primary-rim: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 1px 2px rgba(0, 0, 0, 0.45), 0 4px 10px -2px rgba(0, 0, 0, 0.35);
+      --btn-primary-rim-active: inset 0 1px 2px rgba(0, 0, 0, 0.24), 0 0 0 rgba(0, 0, 0, 0);
+
+      --keycap-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 0 rgba(0, 0, 0, 0.55), 0 2px 5px -1px rgba(0, 0, 0, 0.32);
+      --keycap-shadow-active: inset 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 0 rgba(0, 0, 0, 0);
+
+      --kbd-bg: #272724;
+      --kbd-border: #3B3A36;
+      --kbd-shadow: 0 1px 0 #0E0E0D;
 
       --ok: #46A778;
       --ok-soft: #192B22;
+      --ok-border: #284C3B;
       --warn: #DDA04B;
 
       --nav-bg: rgba(19, 19, 18, 0.86);
@@ -109,7 +133,15 @@
       color: var(--ink-1);
       min-height: 100dvh;
       line-height: 1.65;
-      transition: background-color 240ms var(--ease-calm), color 240ms var(--ease-calm);
+      transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out);
+    }
+
+    /* Keyboard-initiated actions skip animation (Emil Kowalski Hard Rule) */
+    html[data-instant],
+    html[data-instant] *,
+    html[data-instant] *::before,
+    html[data-instant] *::after {
+      transition-duration: 0ms !important;
     }
 
     a {
@@ -119,6 +151,18 @@
 
     button {
       font-family: inherit;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     :focus-visible {
@@ -138,7 +182,7 @@
       font-size: 13px;
       font-weight: 500;
       transform: translateY(-200%);
-      transition: transform 200ms var(--ease-calm);
+      transition: transform 200ms var(--ease-out);
     }
     .skip-link:focus {
       transform: translateY(0);
@@ -221,10 +265,7 @@
       color: var(--ink-2);
     }
     .nav-list a {
-      transition: color 180ms ease;
-    }
-    .nav-list a:hover {
-      color: var(--ink-1);
+      transition: color 160ms var(--ease-out);
     }
 
     .header-actions {
@@ -233,12 +274,43 @@
       gap: 10px;
     }
 
+    /* ================================================================
+       Tactile Buttons & Physical Keycap Mechanics (Emil Kowalski)
+       Asymmetric press: 90ms pointer-down -> 160ms --ease-out release
+       ================================================================ */
+    .kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 500;
+      line-height: 1;
+      color: var(--ink-2);
+      background: var(--kbd-bg);
+      border: 1px solid var(--kbd-border);
+      box-shadow: var(--kbd-shadow);
+      user-select: none;
+    }
+    @media (max-width: 560px) {
+      .header-actions .kbd { display: none; }
+    }
+    .kbd-inline {
+      margin-inline: 2px;
+      vertical-align: 1px;
+    }
+
     .theme-btn {
       height: 34px;
-      padding: 0 11px;
+      padding: 0 9px 0 11px;
       border-radius: 8px;
       border: 1px solid var(--border-hairline);
       background: var(--bg-surface);
+      box-shadow: var(--keycap-shadow);
       color: var(--ink-2);
       display: inline-flex;
       align-items: center;
@@ -246,11 +318,70 @@
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
-      transition: border-color 180ms ease, color 180ms ease, background-color 180ms ease;
+      user-select: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition:
+        transform 160ms var(--ease-out),
+        box-shadow 160ms var(--ease-out),
+        border-color 160ms var(--ease-out),
+        color 160ms var(--ease-out),
+        background-color 160ms var(--ease-out);
     }
-    .theme-btn:hover {
-      border-color: var(--border-strong);
-      color: var(--ink-1);
+    .theme-btn:active,
+    .theme-btn[data-pressed="true"] {
+      transform: scale(0.97);
+      box-shadow: var(--keycap-shadow-active);
+      transition-duration: 90ms;
+    }
+
+    /* Stacked Sun / Moon Icon & Label Morph (scale + blur + opacity) */
+    .theme-icon-slot,
+    .theme-word-slot {
+      display: inline-grid;
+      align-items: center;
+      justify-items: center;
+    }
+    .theme-glyph,
+    .theme-word {
+      grid-area: 1 / 1;
+      transition:
+        transform 180ms var(--ease-out),
+        opacity 180ms var(--ease-out),
+        filter 180ms var(--ease-out);
+    }
+    html[data-theme="light"] .theme-glyph-sun {
+      opacity: 0;
+      transform: scale(0.88) rotate(25deg);
+      filter: blur(1.5px);
+    }
+    html[data-theme="light"] .theme-glyph-moon {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+      filter: blur(0px);
+    }
+    html[data-theme="dark"] .theme-glyph-moon {
+      opacity: 0;
+      transform: scale(0.88) rotate(-25deg);
+      filter: blur(1.5px);
+    }
+    html[data-theme="dark"] .theme-glyph-sun {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+      filter: blur(0px);
+    }
+    html[data-theme="light"] .theme-word-light,
+    html[data-theme="dark"] .theme-word-dark {
+      opacity: 0;
+      transform: scale(0.92);
+      filter: blur(1.5px);
+      pointer-events: none;
+    }
+    html[data-theme="light"] .theme-word-dark,
+    html[data-theme="dark"] .theme-word-light {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0px);
     }
 
     .btn-primary {
@@ -263,18 +394,28 @@
       border-radius: 8px;
       background: var(--btn-primary-bg);
       color: var(--btn-primary-fg);
+      box-shadow: var(--btn-primary-rim);
       font-size: 13px;
       font-weight: 500;
       border: 1px solid transparent;
       cursor: pointer;
       white-space: nowrap;
-      transition: background-color 180ms ease, transform 180ms var(--ease-calm);
-    }
-    .btn-primary:hover {
-      background: var(--btn-primary-hover);
+      user-select: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition:
+        transform 160ms var(--ease-out),
+        background-color 160ms var(--ease-out),
+        box-shadow 160ms var(--ease-out);
     }
     .btn-primary:active {
-      transform: scale(0.985);
+      transform: scale(0.97);
+      box-shadow: var(--btn-primary-rim-active);
+      transition-duration: 90ms;
+    }
+
+    .btn-primary .dl-arrow {
+      transition: transform 160ms var(--ease-out);
     }
 
     .btn-lg {
@@ -289,21 +430,34 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 7px;
       height: 44px;
       padding: 0 18px;
       border-radius: 10px;
       background: var(--bg-surface);
       color: var(--ink-1);
       border: 1px solid var(--border-hairline);
+      box-shadow: var(--keycap-shadow);
       font-size: 14px;
       font-weight: 500;
       white-space: nowrap;
-      transition: border-color 180ms ease, background-color 180ms ease;
+      user-select: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition:
+        transform 160ms var(--ease-out),
+        box-shadow 160ms var(--ease-out),
+        border-color 160ms var(--ease-out),
+        background-color 160ms var(--ease-out);
     }
-    .btn-outline:hover {
-      border-color: var(--border-strong);
-      background: var(--bg-subtle);
+    .btn-outline:active {
+      transform: scale(0.97);
+      box-shadow: var(--keycap-shadow-active);
+      transition-duration: 90ms;
+    }
+    .btn-outline .ext-arrow {
+      color: var(--ink-3);
+      transition: transform 160ms var(--ease-out), color 160ms var(--ease-out);
     }
 
     @media (max-width: 760px) {
@@ -392,57 +546,7 @@
       color: var(--ink-2);
       border-bottom: 1px solid var(--border-strong);
       padding-bottom: 1px;
-      transition: color 160ms ease, border-color 160ms ease;
-    }
-    .os-quick-links a:hover {
-      color: var(--accent);
-      border-color: var(--accent);
-    }
-
-    /* Compact Terminal Command Bar */
-    .cli-strip {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 12px 10px 16px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-hairline);
-      border-radius: 10px;
-      box-shadow: var(--shadow-card);
-      margin-bottom: 36px;
-    }
-
-    .cli-prompt {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      overflow-x: auto;
-      white-space: nowrap;
-      font-size: 13px;
-      color: var(--ink-1);
-    }
-    .cli-dollar {
-      color: var(--accent);
-      user-select: none;
-    }
-
-    .copy-btn {
-      flex-shrink: 0;
-      padding: 5px 11px;
-      border-radius: 6px;
-      border: 1px solid var(--border-hairline);
-      background: var(--bg-subtle);
-      color: var(--ink-2);
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
-    }
-    .copy-btn:hover {
-      color: var(--ink-1);
-      border-color: var(--border-strong);
-      background: var(--bg-hover);
+      transition: color 160ms var(--ease-out), border-color 160ms var(--ease-out);
     }
 
     /* Museum-Grade Product Frame (Zero Gimmicks) */
@@ -471,12 +575,23 @@
       gap: 8px;
     }
 
+    /* Emil Kowalski clip-path Dual-Layer Segmented Control */
     .seg-control {
-      display: inline-flex;
+      position: relative;
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
       padding: 2px;
       border-radius: 8px;
       background: var(--bg-subtle);
       border: 1px solid var(--border-hairline);
+      user-select: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 160ms var(--ease-out);
+    }
+    .seg-control:active {
+      transform: scale(0.975);
+      transition-duration: 90ms;
     }
     .seg-btn {
       padding: 4px 12px;
@@ -487,24 +602,86 @@
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
-      transition: background-color 180ms ease, color 180ms ease;
+      white-space: nowrap;
+      text-align: center;
+      transition: color 160ms var(--ease-out);
     }
-    .seg-btn[aria-selected="true"] {
+    .seg-active-layer {
+      position: absolute;
+      inset: 2px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-radius: 6px;
       background: var(--bg-surface);
       color: var(--ink-1);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 1px 2px rgba(22, 22, 21, 0.08);
+      pointer-events: none;
+      clip-path: inset(0 50% 0 0 round 6px);
+      transition: clip-path 220ms var(--ease-in-out);
+    }
+    .seg-control[data-active="dark"] .seg-active-layer {
+      clip-path: inset(0 0% 0 50% round 6px);
+    }
+    .seg-active-pill {
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
+    /* Stacked Dual-Image Crossfade (Zero Decode Flicker, Zero Bleed-Through) */
     .frame-canvas {
+      display: grid;
       border-radius: 10px;
       overflow: hidden;
       border: 1px solid var(--border-hairline);
       background: var(--bg-subtle);
     }
-    .frame-canvas img {
+    .frame-canvas .shot-img {
+      grid-area: 1 / 1;
       display: block;
       width: 100%;
       height: auto;
+      transition: opacity 220ms var(--ease-out);
+    }
+    .frame-canvas .shot-dark {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .frame-canvas[data-shot="dark"] .shot-dark {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ================================================================
+       One-Shot Hero Choreography (Non-Uniform Shrinking Gaps, < 650ms)
+       ================================================================ */
+    @keyframes heroFadeOnly {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes heroRise {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes heroFrameSettle {
+      from { opacity: 0; transform: scale(0.985) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .choreo-eyebrow {
+      animation: heroFadeOnly 300ms var(--ease-out) both;
+    }
+    .choreo-lead {
+      animation: heroRise 380ms var(--ease-out) both;
+    }
+    .choreo-aside {
+      animation: heroRise 360ms var(--ease-out) 45ms both;
+    }
+    .choreo-frame {
+      animation: heroFrameSettle 400ms var(--ease-out) 80ms both;
     }
 
     /* ================================================================
@@ -552,6 +729,69 @@
     .spec-note {
       font-size: 12px;
       color: var(--ink-3);
+    }
+
+    /* ================================================================
+       Editorial Batch Workflow Split Showcase
+       ================================================================ */
+    .batch-split {
+      display: grid;
+      grid-template-columns: 5fr 7fr;
+      gap: 40px;
+      align-items: center;
+    }
+    @media (max-width: 940px) {
+      .batch-split {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+    }
+
+    .batch-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .batch-copy h2 {
+      font-size: clamp(24px, 3vw, 32px);
+      line-height: 1.28;
+      color: var(--ink-1);
+      text-wrap: balance;
+    }
+    .batch-lead {
+      font-size: 15px;
+      line-height: 1.72;
+      color: var(--ink-2);
+    }
+
+    .batch-points {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid var(--border-hairline);
+      margin-top: 4px;
+    }
+    .batch-point {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      padding-block: 14px;
+      border-bottom: 1px solid var(--border-hairline);
+      align-items: baseline;
+    }
+    .batch-point-num {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .batch-point-body {
+      font-size: 14px;
+      line-height: 1.68;
+      color: var(--ink-2);
+    }
+    .batch-point-body strong {
+      color: var(--ink-1);
+      font-weight: 600;
     }
 
     /* ================================================================
@@ -614,10 +854,7 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
-      transition: border-color 200ms ease;
-    }
-    .editorial-card:hover {
-      border-color: var(--border-strong);
+      transition: border-color 180ms var(--ease-out);
     }
 
     .card-num {
@@ -732,13 +969,10 @@
       gap: 16px;
       padding: 16px 24px;
       border-bottom: 1px solid var(--border-hairline);
-      transition: background-color 160ms ease;
+      transition: background-color 160ms var(--ease-out);
     }
     .release-row:last-child {
       border-bottom: none;
-    }
-    .release-row:hover {
-      background: var(--bg-canvas);
     }
     .release-row.is-current-os {
       background: var(--accent-soft);
@@ -798,22 +1032,46 @@
       text-align: right;
     }
 
+    .sha-link {
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .sha-link .arrow-right {
+      display: inline-block;
+      transition: transform 160ms var(--ease-out);
+    }
+
     .rel-dl {
       justify-self: end;
-      padding: 6px 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      padding: 0 13px;
       border-radius: 7px;
       border: 1px solid var(--border-strong);
       background: var(--bg-surface);
+      box-shadow: var(--keycap-shadow);
       color: var(--ink-1);
       font-size: 12px;
       font-weight: 500;
       white-space: nowrap;
-      transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+      user-select: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition:
+        transform 160ms var(--ease-out),
+        box-shadow 160ms var(--ease-out),
+        background-color 160ms var(--ease-out),
+        color 160ms var(--ease-out),
+        border-color 160ms var(--ease-out);
     }
-    .rel-dl:hover {
-      background: var(--btn-primary-bg);
-      color: var(--btn-primary-fg);
-      border-color: var(--btn-primary-bg);
+    .rel-dl:active {
+      transform: scale(0.97);
+      box-shadow: var(--keycap-shadow-active);
+      transition-duration: 90ms;
     }
 
     /* ================================================================
@@ -864,14 +1122,107 @@
       gap: 24px;
       flex-wrap: wrap;
     }
-    .footer-nav a:hover {
-      color: var(--ink-1);
+    .footer-nav a {
+      transition: color 160ms var(--ease-out);
+    }
+    .author-link {
+      color: var(--ink-2);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border-strong);
+      padding-bottom: 1px;
+      transition: color 160ms var(--ease-out), border-color 160ms var(--ease-out);
     }
 
+    /* ================================================================
+       Hover Gating: Only fire hover states on fine-pointer devices
+       Prevents sticky false-hover states on touchscreens (Emil Rule)
+       ================================================================ */
+    @media (hover: hover) and (pointer: fine) {
+      .nav-list a:hover {
+        color: var(--ink-1);
+      }
+      .theme-btn:hover {
+        border-color: var(--border-strong);
+        color: var(--ink-1);
+        background: var(--bg-subtle);
+      }
+      .btn-primary:hover {
+        background: var(--btn-primary-hover);
+      }
+      .btn-primary:hover .dl-arrow {
+        transform: translateY(1.5px);
+      }
+      .btn-outline:hover {
+        border-color: var(--border-strong);
+        background: var(--bg-subtle);
+      }
+      .btn-outline:hover .ext-arrow {
+        color: var(--ink-1);
+        transform: translate(1.5px, -1.5px);
+      }
+      .os-quick-links a:hover,
+      .author-link:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .seg-btn:hover {
+        color: var(--ink-1);
+      }
+      .editorial-card:hover {
+        border-color: var(--border-strong);
+      }
+      .sha-link:hover .arrow-right {
+        transform: translateX(2.5px);
+      }
+      .release-row:not(.is-current-os):hover {
+        background: var(--bg-canvas);
+      }
+      .rel-dl:hover {
+        background: var(--btn-primary-bg);
+        color: var(--btn-primary-fg);
+        border-color: var(--btn-primary-bg);
+        box-shadow: var(--btn-primary-rim);
+      }
+      .footer-nav a:hover {
+        color: var(--ink-1);
+      }
+    }
+
+    /* ================================================================
+       Reduced Motion: Gentler (quiet opacity fades), zero spatial motion
+       ================================================================ */
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
-      *, *::before, *::after {
+      .choreo-eyebrow,
+      .choreo-lead,
+      .choreo-aside,
+      .choreo-frame {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+      .theme-btn:active,
+      .theme-btn[data-pressed="true"],
+      .btn-primary:active,
+      .btn-outline:active,
+      .seg-control:active,
+      .rel-dl:active,
+      .btn-primary .dl-arrow,
+      .btn-outline .ext-arrow,
+      .sha-link .arrow-right {
+        transform: none !important;
+      }
+      .theme-glyph,
+      .theme-word {
+        transform: none !important;
+        filter: none !important;
+        transition: opacity 140ms linear !important;
+      }
+      .seg-active-layer {
         transition: none !important;
+      }
+      .frame-canvas .shot-img {
+        transition: opacity 140ms linear !important;
       }
     }
   </style>
@@ -898,6 +1249,7 @@
       </a>
 
       <ul class="nav-list">
+        <li><a href="#batch">批量选集</a></li>
         <li><a href="#architecture">架构细节</a></li>
         <li><a href="#releases">全平台下载</a></li>
         <li><a href="#faq">常见问答</a></li>
@@ -905,12 +1257,21 @@
       </ul>
 
       <div class="header-actions">
-        <button type="button" class="theme-btn" id="theme-toggle" aria-label="切换浅色或深色阅读外观">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="4"></circle>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
-          </svg>
-          <span id="theme-label">深色</span>
+        <button type="button" class="theme-btn" id="theme-toggle" aria-label="切换浅色或深色阅读外观" aria-keyshortcuts="t" title="切换外观 (快捷键 T)">
+          <span class="theme-icon-slot" aria-hidden="true">
+            <svg class="theme-glyph theme-glyph-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            <svg class="theme-glyph theme-glyph-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+            </svg>
+          </span>
+          <span class="theme-word-slot" aria-hidden="true">
+            <span class="theme-word theme-word-dark">深色</span>
+            <span class="theme-word theme-word-light">浅色</span>
+          </span>
+          <kbd class="kbd" aria-hidden="true">T</kbd>
         </button>
         <a href="#releases" class="btn-primary">获取安装包</a>
       </div>
@@ -922,17 +1283,17 @@
     <section id="top" class="hero container">
       <div class="hero-top">
         <div>
-          <div class="eyebrow">
+          <div class="eyebrow choreo-eyebrow">
             <span class="eyebrow-dot" aria-hidden="true"></span>
             <span>OPEN SOURCE · MACOS / WINDOWS / LINUX</span>
           </div>
-          <h1 class="hero-heading serif-title">
+          <h1 class="hero-heading serif-title choreo-lead">
             安静、满速地保存<br />
             B 站视频与<em>整季番剧</em>
           </h1>
         </div>
 
-        <div class="hero-aside">
+        <div class="hero-aside choreo-aside">
           <p class="hero-lead">
             没有冗余广告与繁琐配置。内置 64 路长连接并发池与多 CDN 测速轮换，粘贴链接即可按真实画质保存本地 MP4，随时毫秒级暂停续传。
           </p>
@@ -941,13 +1302,19 @@
             <a id="hero-dl-btn" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-macOS.dmg" class="btn-primary btn-lg">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
+                <g class="dl-arrow">
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </g>
               </svg>
               <span id="hero-dl-text">下载 macOS 版 (.dmg)</span>
             </a>
             <a href="https://github.com/oldsixxiaolv/bilifetch" target="_blank" rel="noopener" class="btn-outline">
-              浏览源码仓库
+              <span>浏览源码仓库</span>
+              <svg class="ext-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="7" y1="17" x2="17" y2="7"></line>
+                <polyline points="7 7 17 7 17 17"></polyline>
+              </svg>
             </a>
           </div>
 
@@ -962,26 +1329,22 @@
         </div>
       </div>
 
-      <!-- One-Line CLI Utility Strip -->
-      <div class="cli-strip">
-        <div class="cli-prompt mono">
-          <span class="cli-dollar">$</span>
-          <code id="cli-code">bilifetch "https://www.bilibili.com/bangumi/play/ep1633643"</code>
-        </div>
-        <button type="button" class="copy-btn" id="copy-btn">复制终端命令</button>
-      </div>
-
       <!-- Clean Product Window Frame -->
-      <div class="product-frame">
+      <div class="product-frame choreo-frame">
         <div class="frame-caption-bar">
           <span class="frame-label mono">BiliFetch v1.2.0 · 桌面端与命令行共用同一套下载核心</span>
-          <div class="seg-control" role="tablist" aria-label="界面截图外观预览">
-            <button type="button" role="tab" class="seg-btn" id="tab-shot-light" aria-selected="true" data-src="./screenshot.png">浅色外观</button>
-            <button type="button" role="tab" class="seg-btn" id="tab-shot-dark" aria-selected="false" data-src="./screenshot-dark.png">深色外观</button>
+          <div class="seg-control" id="shot-tablist" role="tablist" aria-label="界面截图外观预览" data-active="light">
+            <button type="button" role="tab" class="seg-btn" id="tab-shot-light" aria-selected="true" aria-controls="shot-stage" tabindex="0">浅色外观</button>
+            <button type="button" role="tab" class="seg-btn" id="tab-shot-dark" aria-selected="false" aria-controls="shot-stage" tabindex="-1">深色外观</button>
+            <div class="seg-active-layer" aria-hidden="true">
+              <span class="seg-active-pill">浅色外观</span>
+              <span class="seg-active-pill">深色外观</span>
+            </div>
           </div>
         </div>
-        <div class="frame-canvas">
-          <img id="shot-preview" src="./screenshot.png" width="920" height="720" alt="BiliFetch 1.2.0 桌面端队列界面：清晰展示 4K 超清进度、全部开始与全部暂停按钮及断点续传状态" />
+        <div class="frame-canvas" id="shot-stage" data-shot="light">
+          <img class="shot-img shot-light" src="./screenshot.png" width="920" height="720" alt="BiliFetch 1.2.0 桌面端队列界面（浅色外观）：清晰展示 4K 超清进度、全部开始与全部暂停按钮及断点续传状态" />
+          <img class="shot-img shot-dark" src="./screenshot-dark.png" width="920" height="720" decoding="async" alt="BiliFetch 1.2.0 桌面端队列界面（深色外观）：暖炭黑低眩光表面与并发队列进度状态" />
         </div>
       </div>
     </section>
@@ -1012,10 +1375,62 @@
       </div>
     </section>
 
-    <!-- Section 01: Core Engineering Architecture -->
-    <section id="architecture" class="section container">
+    <!-- Section 01: Batch Episode Selection & Collection Showcase -->
+    <section id="batch" class="section container">
+      <div class="batch-split">
+        <div class="batch-copy">
+          <div class="section-index">01 / BATCH WORKFLOW</div>
+          <h2 class="serif-title">整季番剧、百集课程与收藏夹，<br />一次勾选批量拉满</h2>
+          <p class="batch-lead">
+            粘贴番剧、多 P 教程、UP 主合集或个人收藏夹链接，自动识别并弹出高清选集清单。告别逐集复制地址，勾选确认即刻推入 64 路并发队列。
+          </p>
+
+          <ul class="batch-points">
+            <li class="batch-point">
+              <span class="batch-point-num">01</span>
+              <div class="batch-point-body">
+                <strong>正片与花絮智能分流</strong> — 默认折叠 PV 预告与幕后花絮，正片自动补齐 <code class="mono" style="font-size: 12.5px;">第01集</code> 序号防止同名覆盖。
+              </div>
+            </li>
+            <li class="batch-point">
+              <span class="batch-point-num">02</span>
+              <div class="batch-point-body">
+                <strong>键盘级极速筛选连选</strong> — 支持 <kbd class="kbd kbd-inline">⌘F</kbd> 实时过滤标题、<kbd class="kbd kbd-inline">Shift</kbd> 区间连选、<kbd class="kbd kbd-inline">Space</kbd> 切换与一键反选。
+              </div>
+            </li>
+            <li class="batch-point">
+              <span class="batch-point-num">03</span>
+              <div class="batch-point-body">
+                <strong>收藏夹清洗与纯享音频</strong> — 解析时自动剔除已失效稿件；支持勾选「只下载音频」批量提取播客与音乐 <code class="mono" style="font-size: 12.5px;">.m4a</code>。
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="product-frame">
+          <div class="frame-caption-bar">
+            <span class="frame-label mono">合集与番剧预览窗口 · 已勾选 6 / 12 集正片</span>
+            <div class="seg-control" id="batch-tablist" role="tablist" aria-label="批量选集窗口外观预览" data-active="light">
+              <button type="button" role="tab" class="seg-btn" id="tab-batch-light" aria-selected="true" aria-controls="batch-stage" tabindex="0">浅色外观</button>
+              <button type="button" role="tab" class="seg-btn" id="tab-batch-dark" aria-selected="false" aria-controls="batch-stage" tabindex="-1">深色外观</button>
+              <div class="seg-active-layer" aria-hidden="true">
+                <span class="seg-active-pill">浅色外观</span>
+                <span class="seg-active-pill">深色外观</span>
+              </div>
+            </div>
+          </div>
+          <div class="frame-canvas" id="batch-stage" data-shot="light">
+            <img class="shot-img shot-light" src="./screenshot-batch.png" width="840" height="650" loading="lazy" decoding="async" alt="BiliFetch 批量选集窗口（浅色外观）：展示整季 12 集番剧封面、搜索框、全选反选按钮、剧集缩略图与一键下载 6 个按钮" />
+            <img class="shot-img shot-dark" src="./screenshot-batch-dark.png" width="840" height="650" loading="lazy" decoding="async" alt="BiliFetch 批量选集窗口（深色外观）：暖炭黑批量勾选剧集清单界面" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 02: Core Engineering Architecture -->
+    <section id="architecture" class="section container" style="padding-top: 8px;">
       <div class="section-header">
-        <div class="section-index">01 / ARCHITECTURE</div>
+        <div class="section-index">02 / ARCHITECTURE</div>
         <div class="section-heading-wrap">
           <h2 class="serif-title">把功夫花在看不见的稳定性上</h2>
           <p>针对大体积 DASH 音视频流、CDN 节点限速与批量选集场景做了系统性打磨，让每一次点击都干脆利落。</p>
@@ -1093,10 +1508,10 @@
       </div>
     </section>
 
-    <!-- Section 02: Scannable Multi-Platform Release Table -->
+    <!-- Section 03: Scannable Multi-Platform Release Table -->
     <section id="releases" class="section container" style="padding-top: 16px;">
       <div class="section-header">
-        <div class="section-index">02 / RELEASES</div>
+        <div class="section-index">03 / RELEASES</div>
         <div class="section-heading-wrap">
           <h2 class="serif-title">全平台发行包一览</h2>
           <p>当前稳定版本 v1.2.0，所有构建产物均提供 SHA256 校验值。</p>
@@ -1106,14 +1521,15 @@
       <div class="release-box">
         <div class="release-box-head">
           <span style="font-weight: 600;">BiliFetch v1.2.0 Stable</span>
-          <a href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/SHA256SUMS" class="mono" style="color: var(--accent);">
-            下载 SHA256SUMS 校验文件 →
+          <a href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/SHA256SUMS" class="mono sha-link">
+            <span>下载 SHA256SUMS 校验文件</span>
+            <span class="arrow-right" aria-hidden="true">→</span>
           </a>
         </div>
 
         <div class="release-row" data-os="macos">
           <div class="rel-os">macOS 桌面版 <span class="os-badge">当前系统</span></div>
-          <div class="rel-desc">自包含 BiliFetch.app 图形界面镜像 (.dmg)，拖入应用程序即用，无需装 Python</div>
+          <div class="rel-desc">自包含 BiliFetch.app 图形界面镜像 (.dmg)，内置 Python 与 Qt5 运行时，拖入应用程序即用</div>
           <div class="rel-size mono">50.6 MB</div>
           <div class="rel-sha mono">sha256: 20082afd…</div>
           <a class="rel-dl" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-macOS.dmg">下载 .dmg</a>
@@ -1121,7 +1537,7 @@
 
         <div class="release-row">
           <div class="rel-os">macOS 命令行</div>
-          <div class="rel-desc">轻量原生命令行安装包 (.pkg)，安装后终端直接运行 bilifetch</div>
+          <div class="rel-desc">轻量命令行安装包 (.pkg)，注册 /usr/local/bin/bilifetch（复用本机 Python 3 与 requests）</div>
           <div class="rel-size mono">32.3 KB</div>
           <div class="rel-sha mono">sha256: 6ccb448b…</div>
           <a class="rel-dl" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-cli.pkg">下载 .pkg</a>
@@ -1129,7 +1545,7 @@
 
         <div class="release-row" data-os="windows">
           <div class="rel-os">Windows 独立版 <span class="os-badge">当前系统</span></div>
-          <div class="rel-desc">64 位免安装绿色包，内置 BiliFetch.exe 与 ffmpeg.exe，解压双击即用</div>
+          <div class="rel-desc">64 位免安装独立版，内置 Python 3.11 与 Qt5 运行时，解压双击 BiliFetch.exe 即用（免装 Python）</div>
           <div class="rel-size mono">46.5 MB</div>
           <div class="rel-sha mono">sha256: a5e76ee3…</div>
           <a class="rel-dl" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-Windows-x64.zip">下载 .zip</a>
@@ -1137,7 +1553,7 @@
 
         <div class="release-row">
           <div class="rel-os">Windows 轻量包</div>
-          <div class="rel-desc">面向已安装 Python 环境的便携脚本包，附一键创建桌面快捷方式批处理</div>
+          <div class="rel-desc">面向已安装 Python 环境的纯脚本便携包，附一键安装依赖与创建桌面快捷方式脚本</div>
           <div class="rel-size mono">183 KB</div>
           <div class="rel-sha mono">sha256: c6903117…</div>
           <a class="rel-dl" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-Windows.zip">下载 .zip</a>
@@ -1145,7 +1561,7 @@
 
         <div class="release-row" data-os="linux">
           <div class="rel-os">Debian / Ubuntu <span class="os-badge">当前系统</span></div>
-          <div class="rel-desc">标准 .deb 安装包，自动注册桌面菜单图标与 bilifetch 终端命令</div>
+          <div class="rel-desc">Architecture: all 系统包 (.deb)，通过 apt 自动关联系统 Python3、PyQt5 与 FFmpeg，故体积仅 519 KB</div>
           <div class="rel-size mono">519 KB</div>
           <div class="rel-sha mono">sha256: 89c82c14…</div>
           <a class="rel-dl" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/bilifetch_1.2.0_all.deb">下载 .deb</a>
@@ -1153,18 +1569,26 @@
 
         <div class="release-row">
           <div class="rel-os">Linux 独立归档</div>
-          <div class="rel-desc">免 Python 依赖的 x64 二进制归档 (.tar.gz)，适配 Arch / Fedora 等任意发行版</div>
+          <div class="rel-desc">打包完整 Python 3.11 与 Qt5 动态库的 x64 二进制归档，免装 Python，适配 Arch / Fedora 等发行版</div>
           <div class="rel-size mono">73.7 MB</div>
           <div class="rel-sha mono">sha256: 05f2f753…</div>
           <a class="rel-dl" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-Linux-x64.tar.gz">下载 .tar.gz</a>
         </div>
+
+        <div class="release-row">
+          <div class="rel-os">Linux 轻量归档</div>
+          <div class="rel-desc">面向已具备 Python3 与 PyQt5 环境的通用脚本包 (.tar.gz)，附 install.sh 安装与桌面图标注册脚本</div>
+          <div class="rel-size mono">956 KB</div>
+          <div class="rel-sha mono">sha256: 8a6dc96d…</div>
+          <a class="rel-dl" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-Linux.tar.gz">下载 .tar.gz</a>
+        </div>
       </div>
     </section>
 
-    <!-- Section 03: Concise FAQ -->
+    <!-- Section 04: Concise FAQ -->
     <section id="faq" class="section container" style="padding-top: 16px;">
       <div class="section-header">
-        <div class="section-index">03 / FAQ</div>
+        <div class="section-index">04 / FAQ</div>
         <div class="section-heading-wrap">
           <h2 class="serif-title">常见问答</h2>
         </div>
@@ -1178,7 +1602,7 @@
 
         <article class="faq-item">
           <h3>合并音视频是否需要安装 FFmpeg？</h3>
-          <p>Windows 独立版已内置 ffmpeg.exe；macOS 在终端执行一次 brew install ffmpeg，Ubuntu 执行 apt install ffmpeg 即可启用无损混流。</p>
+          <p>Debian / Ubuntu 安装 .deb 包时会自动随 apt 装好 ffmpeg；macOS 在终端执行一次 brew install ffmpeg，Windows 执行一次 winget install Gyan.FFmpeg 即可启用无损混流。</p>
         </article>
 
         <article class="faq-item">
@@ -1197,7 +1621,7 @@
   <!-- Minimal Footer -->
   <footer class="site-footer">
     <div class="container footer-inner">
-      <div>BiliFetch v1.2.0 · MIT License · 仅供个人学习与技术研究使用</div>
+      <div>BiliFetch v1.2.0 · 由 <a href="https://github.com/oldsixxiaolv" target="_blank" rel="noopener" class="author-link">oldsixxiaolv</a> 开发 · MIT License · 仅供个人学习与技术研究使用</div>
       <nav class="footer-nav" aria-label="页脚链接">
         <a href="https://github.com/oldsixxiaolv/bilifetch">源码仓库</a>
         <a href="https://github.com/oldsixxiaolv/bilifetch/releases">历史版本</a>
@@ -1211,43 +1635,112 @@
     (function () {
       var root = document.documentElement;
       var themeBtn = document.getElementById("theme-toggle");
-      var themeLbl = document.getElementById("theme-label");
-      var shotImg = document.getElementById("shot-preview");
-      var tabLight = document.getElementById("tab-shot-light");
-      var tabDark = document.getElementById("tab-shot-dark");
 
-      function setShotMode(mode) {
-        if (!shotImg || !tabLight || !tabDark) return;
-        var isDark = mode === "dark";
-        tabLight.setAttribute("aria-selected", isDark ? "false" : "true");
-        tabDark.setAttribute("aria-selected", isDark ? "true" : "false");
-        shotImg.src = isDark ? "./screenshot-dark.png" : "./screenshot.png";
-      }
-
-      function applyPageTheme(mode) {
-        root.setAttribute("data-theme", mode);
-        if (themeLbl) {
-          themeLbl.textContent = mode === "dark" ? "浅色" : "深色";
-        }
-        setShotMode(mode);
-      }
-
-      // Respect system preference initially if dark
-      if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        applyPageTheme("dark");
-      }
-
-      if (themeBtn) {
-        themeBtn.addEventListener("click", function () {
-          var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-          applyPageTheme(next);
+      // Run a state update with 0ms transitions (used on initial boot & keyboard shortcuts)
+      function runInstant(fn) {
+        root.setAttribute("data-instant", "");
+        fn();
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            root.removeAttribute("data-instant");
+          });
         });
       }
 
-      if (tabLight && tabDark) {
-        tabLight.addEventListener("click", function () { setShotMode("light"); });
-        tabDark.addEventListener("click", function () { setShotMode("dark"); });
+      // Reusable Emil Kowalski clip-path segmented frame controller
+      function bindShotFrame(tablistId, stageId, lightId, darkId) {
+        var tablist = document.getElementById(tablistId);
+        var stage = document.getElementById(stageId);
+        var btnL = document.getElementById(lightId);
+        var btnD = document.getElementById(darkId);
+        function setMode(mode) {
+          if (!tablist || !stage || !btnL || !btnD) return;
+          var isDark = mode === "dark";
+          tablist.setAttribute("data-active", isDark ? "dark" : "light");
+          stage.setAttribute("data-shot", isDark ? "dark" : "light");
+          btnL.setAttribute("aria-selected", isDark ? "false" : "true");
+          btnD.setAttribute("aria-selected", isDark ? "true" : "false");
+          btnL.setAttribute("tabindex", isDark ? "-1" : "0");
+          btnD.setAttribute("tabindex", isDark ? "0" : "-1");
+        }
+        if (btnL && btnD && tablist) {
+          btnL.addEventListener("click", function (e) {
+            if (e.detail === 0) runInstant(function () { setMode("light"); });
+            else setMode("light");
+          });
+          btnD.addEventListener("click", function (e) {
+            if (e.detail === 0) runInstant(function () { setMode("dark"); });
+            else setMode("dark");
+          });
+          tablist.addEventListener("keydown", function (e) {
+            if (e.key === "ArrowRight" || e.key === "ArrowLeft" || e.key === "Home" || e.key === "End") {
+              e.preventDefault();
+              var nextMode;
+              if (e.key === "Home") nextMode = "light";
+              else if (e.key === "End") nextMode = "dark";
+              else nextMode = tablist.getAttribute("data-active") === "dark" ? "light" : "dark";
+              runInstant(function () { setMode(nextMode); });
+              (nextMode === "dark" ? btnD : btnL).focus();
+            }
+          });
+        }
+        return setMode;
       }
+
+      var setHeroShot = bindShotFrame("shot-tablist", "shot-stage", "tab-shot-light", "tab-shot-dark");
+      var setBatchShot = bindShotFrame("batch-tablist", "batch-stage", "tab-batch-light", "tab-batch-dark");
+
+      function applyPageTheme(mode) {
+        root.setAttribute("data-theme", mode);
+        setHeroShot(mode);
+        setBatchShot(mode);
+      }
+
+      // Respect system preference initially with 0ms transition (no load flash)
+      if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        runInstant(function () {
+          applyPageTheme("dark");
+        });
+      }
+
+      if (themeBtn) {
+        themeBtn.addEventListener("click", function (e) {
+          var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+          if (e.detail === 0) {
+            runInstant(function () { applyPageTheme(next); });
+          } else {
+            applyPageTheme(next);
+          }
+        });
+      }
+
+      // Global single-key shortcut (T: toggle theme)
+      function isTypingTarget(el) {
+        if (!el) return false;
+        var tag = el.tagName;
+        return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+      }
+
+      document.addEventListener("keydown", function (e) {
+        if (e.defaultPrevented || e.repeat || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
+        if (isTypingTarget(e.target)) return;
+        var key = (e.key || "").toLowerCase();
+        if (key === "t" && themeBtn) {
+          e.preventDefault();
+          var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+          runInstant(function () {
+            themeBtn.setAttribute("data-pressed", "true");
+            applyPageTheme(next);
+          });
+        }
+      });
+
+      document.addEventListener("keyup", function (e) {
+        var key = (e.key || "").toLowerCase();
+        if (key === "t" && themeBtn && themeBtn.hasAttribute("data-pressed")) {
+          runInstant(function () { themeBtn.removeAttribute("data-pressed"); });
+        }
+      });
 
       // Auto-detect OS for Hero button & Release Table row highlight
       var ua = navigator.userAgent || "";
@@ -1271,19 +1764,6 @@
       }
       var osRow = document.querySelector('.release-row[data-os="' + osKey + '"]');
       if (osRow) osRow.classList.add("is-current-os");
-
-      // Copy CLI button
-      var copyBtn = document.getElementById("copy-btn");
-      var cliCode = document.getElementById("cli-code");
-      if (copyBtn && cliCode) {
-        copyBtn.addEventListener("click", function () {
-          if (navigator.clipboard) {
-            navigator.clipboard.writeText(cliCode.textContent || "");
-          }
-          copyBtn.textContent = "已复制";
-          setTimeout(function () { copyBtn.textContent = "复制终端命令"; }, 1500);
-        });
-      }
     })();
   </script>
 </body>

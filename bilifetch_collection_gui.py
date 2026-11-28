@@ -135,13 +135,13 @@ class CoverBox(QWidget):
         ) else 1.0
 
         if self._pm is None or prog < 1.0:
-            draw_skeleton_shimmer(p, r, 10.0, self._shimmer_phase)
+            draw_skeleton_shimmer(p, r, 8.0, self._shimmer_phase)
             p.drawPixmap(int(r.center().x() - 11), int(r.center().y() - 11),
                          make_icon("play", t_color("ink_3"), 22))
         if self._pm is not None:
             p.save()
             path = QPainterPath()
-            path.addRoundedRect(r, 10.0, 10.0)
+            path.addRoundedRect(r, 8.0, 8.0)
             p.setClipPath(path)
             if prog < 1.0:
                 p.setOpacity(prog)

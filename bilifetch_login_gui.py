@@ -174,8 +174,8 @@ class QrBox(QWidget):
             p.save()
             p.setOpacity(self._overlay_prog)
             path = QPainterPath()
-            path.addRoundedRect(r.adjusted(1, 1, -1, -1), 11, 11)
-            p.fillPath(path, QColor(24, 27, 34, 232) if is_dark() else QColor(255, 255, 255, 232))
+            path.addRoundedRect(r.adjusted(1, 1, -1, -1), 12, 12)
+            p.fillPath(path, QColor(31, 31, 31, 236) if is_dark() else QColor(255, 255, 255, 236))
 
             cx, cy = r.center().x(), r.center().y() - 10
             if not reduced_motion():
@@ -189,13 +189,13 @@ class QrBox(QWidget):
             if self._overlay_mode in ("scanned", "done"):
                 fg, soft = t["state_colors"]["done"]
                 p.setBrush(QColor(soft))
-                p.drawEllipse(badge)
+                p.drawRoundedRect(badge, 12, 12)
                 p.drawPixmap(QPointF(cx - 11, cy - 11), make_icon("check", fg, 22))
                 label = "登录成功" if self._overlay_mode == "done" else "已扫码，待手机确认"
                 col = t["ink"]
             else:
                 p.setBrush(QColor(t["field"]))
-                p.drawEllipse(badge)
+                p.drawRoundedRect(badge, 12, 12)
                 p.drawPixmap(QPointF(cx - 10, cy - 10), make_icon("retry", t["ink_2"], 20))
                 label = "二维码已失效"
                 col = t["ink_2"]

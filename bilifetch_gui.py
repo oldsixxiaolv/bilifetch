@@ -50,10 +50,11 @@ from bilifetch_login_gui import LoginDialog             # noqa: E402
 from bilifetch_ui import (ACCENT, ACCENT_SOFT, BLUE, CARD, DUR_POPOVER, DUR_TOAST_IN,  # noqa: E402
                           DUR_TOAST_OUT, FIELD, GREEN, INK, INK_2, INK_3, LINE, ORANGE,
                           QSS, RED, STATE_COLORS, TRACK, AccountChip, Button, Card,
-                          ComboBox, IconButton, LogoTile, Segmented, animate_dialog_open,
-                          draw_focus_ring, draw_fox, draw_scroll_edge_fade, ease_out,
-                          eval_ease_out, is_dark, make_icon, mix, reduced_motion,
-                          set_theme, state_colors, t_color, tabular_font, theme, ui_font)
+                          ComboBox, IconButton, LogoTile, Segmented, _ui_families,
+                          animate_dialog_open, draw_focus_ring, draw_fox,
+                          draw_scroll_edge_fade, ease_out, eval_ease_out, is_dark,
+                          make_icon, mix, reduced_motion, set_theme, state_colors,
+                          t_color, tabular_font, theme, ui_font)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -387,14 +388,14 @@ class PreviewThread(QThread):
 
 # ---------------------------------------------------------------- 行内链接识别徽章与错误提示条
 class LinkBadge(QWidget):
-    """实时显示识别到的链接类型胶囊（如 番剧 / 视频 / 合集 / 短链）。"""
+    """实时显示识别到的链接类型方角徽章（取代胶丸，采用 radius/4）。"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._label = ""
         self._color_key = "accent"
-        self._font = ui_font(11, QFont.DemiBold)
-        self.setFixedHeight(22)
+        self._font = ui_font(12, QFont.DemiBold)
+        self.setFixedHeight(24)
         self.hide()
 
     def setKind(self, info):
@@ -406,7 +407,7 @@ class LinkBadge(QWidget):
         self._label = label
         self._color_key = color_key
         fm = QFontMetrics(self._font)
-        self.setFixedWidth(fm.horizontalAdvance(label) + 18)
+        self.setFixedWidth(fm.horizontalAdvance(label) + 16)
         self.show()
         self.update()
 
@@ -421,7 +422,7 @@ class LinkBadge(QWidget):
         bg.setAlpha(38 if is_dark() else 26)
         p.setPen(Qt.NoPen)
         p.setBrush(bg)
-        p.drawRoundedRect(r, r.height() / 2.0, r.height() / 2.0)
+        p.drawRoundedRect(r, 4.0, 4.0)
         p.setFont(self._font)
         p.setPen(c)
         p.drawText(r, Qt.AlignCenter, self._label)
@@ -664,9 +665,9 @@ class QueueDelegate(QStyledItemDelegate):
         if is_hover or is_focus:
             p.setPen(Qt.NoPen)
             p.setBrush(QColor(t["row_hover"]))
-            p.drawRoundedRect(r, 10, 10)
+            p.drawRoundedRect(r, 8, 8)
         if is_focus:
-            draw_focus_ring(p, r, 10)
+            draw_focus_ring(p, r, 8)
 
         # 左侧状态圆
         c = QRectF(r.left() + 12, r.center().y() - 16, 32, 32)
@@ -705,7 +706,7 @@ class QueueDelegate(QStyledItemDelegate):
                     job.pop("done_t", None)
             p.setPen(Qt.NoPen)
             p.setBrush(QColor(soft))
-            p.drawEllipse(c)
+            p.drawRoundedRect(c, 8, 8)
             icon = {"done": "check", "fail": "close", "cancel": "stop", "pause": "pause"}.get(st)
             if icon:
                 p.drawPixmap(int(c.center().x() - 8), int(c.center().y() - 8),
@@ -1109,21 +1110,21 @@ class Toast(QWidget):
             p.setBrush(QColor(0, 0, 0, alpha))
             p.drawRoundedRect(r.adjusted(-1, dy, 1, dy + 1), 12, 12)
 
-        p.setBrush(QColor(24, 25, 28, 242))
-        p.setPen(QPen(QColor(255, 255, 255, 34), 1))
-        p.drawRoundedRect(r, 11, 11)
+        p.setBrush(QColor("#1F1F1F"))
+        p.setPen(QPen(QColor("#313131"), 1))
+        p.drawRoundedRect(r, 12, 12)
 
         ic_map = {
-            "ok": ("check", "#36C982"),
-            "warn": ("warning", "#FFAD42"),
-            "paste": ("paste", "#FB7299"),
-            "info": ("info", "#FB7299"),
+            "ok": ("check", "#3BB87E"),
+            "warn": ("warning", "#E8A246"),
+            "paste": ("paste", "#E87598"),
+            "info": ("info", "#E87598"),
         }
-        ic_name, ic_col = ic_map.get(self._kind, ("info", "#FB7299"))
+        ic_name, ic_col = ic_map.get(self._kind, ("info", "#E87598"))
         p.drawPixmap(QPointF(r.left() + 14, r.center().y() - 8), make_icon(ic_name, ic_col, 16))
 
         p.setFont(self._font)
-        p.setPen(QColor("#F6F7F8"))
+        p.setPen(QColor("#F5F5F5"))
         fm = QFontMetrics(self._font)
         tx = r.left() + 38
         tw = r.right() - tx - 14
@@ -1142,10 +1143,10 @@ class BreakUiBar(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         lay = QHBoxLayout(self)
-        lay.setContentsMargins(10, 6, 10, 6)
+        lay.setContentsMargins(8, 6, 8, 6)
         lay.setSpacing(8)
         lbl = QLabel("Break UI 压测")
-        lbl.setFont(ui_font(11, QFont.DemiBold))
+        lbl.setFont(ui_font(12, QFont.DemiBold))
         lay.addWidget(lbl)
         self.seg = Segmented(["还原", "常规示例", "极端数据", "空状态", "单条", "1000行"], compact=True)
         self.seg.changed.connect(self.modeChanged.emit)
@@ -1159,7 +1160,8 @@ class BreakUiBar(QWidget):
         r = QRectF(self.rect()).adjusted(1, 1, -1, -1)
         p.setBrush(QColor(t_color("card")))
         p.setPen(QPen(QColor(t_color("accent")), 1.5))
-        p.drawRoundedRect(r, 11, 11)
+        # outer=12, gap=6 -> inner compact Segmented radius=6 (12 - 6 = 6)
+        p.drawRoundedRect(r, 12, 12)
         p.end()
 
 
@@ -1261,14 +1263,14 @@ class MainWindow(QMainWindow):
     def _build_ui(self):
         central = QWidget()
         root = QVBoxLayout(central)
-        root.setContentsMargins(24, 16, 24, 18)
+        root.setContentsMargins(24, 16, 24, 16)
         root.setSpacing(12)
 
-        # ---- 顶栏（8px 间距网格，34x34 热区）----
+        # ---- 顶栏（严格 8px 间距网格，32x32 统一热区与 radius/8 方角）----
         head = QHBoxLayout()
-        head.setContentsMargins(6, 0, 6, 0)
+        head.setContentsMargins(4, 0, 4, 0)
         head.setSpacing(8)
-        head.addWidget(LogoTile(34))
+        head.addWidget(LogoTile(32))
         t = QLabel("BiliFetch")
         t.setObjectName("h1")
         head.addWidget(t)
@@ -1276,20 +1278,20 @@ class MainWindow(QMainWindow):
         self.account = AccountChip()
         self.account.clicked.connect(self._on_account)
         head.addWidget(self.account)
-        self.btn_theme = IconButton("moon", "切换深色 / 浅色外观（⌘T）", size=34)
+        self.btn_theme = IconButton("moon", "切换深色 / 浅色外观（⌘T）", size=32)
         self.btn_theme.clicked.connect(self.toggle_theme)
         head.addWidget(self.btn_theme)
-        self.btn_settings = IconButton("gear", "设置（代理 / Cookie）", size=34)
+        self.btn_settings = IconButton("gear", "设置（代理 / Cookie）", size=32)
         self.btn_settings.clicked.connect(self.on_settings)
         head.addWidget(self.btn_settings)
         root.addLayout(head)
 
-        # ---- 输入卡 ----
-        self.input_card = Card(padding=(18, 18, 18, 16))
+        # ---- 输入卡（outer radius=16, padding=16, inner radius=8）----
+        self.input_card = Card(padding=(16, 16, 16, 16))
         card = self.input_card
         card.layout.setSpacing(12)
         row = QHBoxLayout()
-        row.setSpacing(10)
+        row.setSpacing(8)
         self.url_edit = QLineEdit()
         self.url_edit.setObjectName("bigInput")
         self.url_edit.setPlaceholderText("粘贴 B 站链接或 BV 号，回车解析")
@@ -1300,8 +1302,8 @@ class MainWindow(QMainWindow):
         paste.setToolTip("从剪贴板粘贴")
         paste.triggered.connect(self._paste_clipboard)
         self.url_edit.addAction(paste, QLineEdit.TrailingPosition)
-        self.btn_start = Button("解析", "primary", "search", height=46)
-        self.btn_start.setMinimumWidth(108)
+        self.btn_start = Button("解析", "primary", "search", height=48)
+        self.btn_start.setMinimumWidth(104)
         self.btn_start.setToolTip("读取链接内容，选好要下载的再开始")
         self.btn_start.clicked.connect(self.on_browse)
         row.addWidget(self.url_edit, 1)
@@ -1335,14 +1337,14 @@ class MainWindow(QMainWindow):
         for label, qid in QUALITY_CHOICES:
             self.quality_box.addItem(label, qid)
         self.quality_box.setToolTip("没有这个画质时自动选最接近的；未登录最高 480P")
-        self.quality_box.setMinimumWidth(130)
+        self.quality_box.setMinimumWidth(128)
         self.quality_box.currentIndexChanged.connect(lambda _i: self._save_settings())
         opt.addWidget(self.quality_box)
         card.layout.addLayout(opt)
         root.addWidget(card)
 
-        # ---- 队列卡 ----
-        qcard = Card(padding=(14, 14, 14, 10))
+        # ---- 队列卡（padding 16/12，spacing 8）----
+        qcard = Card(padding=(16, 16, 16, 12))
         qcard.layout.setSpacing(8)
         qhead = QHBoxLayout()
         qhead.setContentsMargins(4, 0, 0, 0)
@@ -1357,10 +1359,11 @@ class MainWindow(QMainWindow):
         self.summary = QLabel("")
         self.summary.setObjectName("muted")
         self.summary.setFont(tabular_font(12))
-        self.summary.setContentsMargins(6, 0, 4, 0)
+        self.summary.setContentsMargins(8, 0, 4, 0)
         qhead.addWidget(self.summary)
         qhead.addStretch(1)
-        self.btn_clear = Button("清除已完成", "ghost", "trash", height=32)
+        self.btn_clear = Button("清理", "ghost", "trash", height=32)
+        self.btn_clear.setToolTip("清除已完成或已暂停的任务")
         self.btn_clear.clicked.connect(self.on_clear)
         self.btn_start_all = Button("全部开始", "primary", "play", height=32)
         self.btn_start_all.setToolTip("继续所有已暂停或失败的下载任务")
@@ -2397,13 +2400,8 @@ def _make_app():
     app.setApplicationName("BiliFetch")
     app.setStyle("Fusion")
     f = app.font()
-    if sys.platform == "darwin":
-        f.setFamily(".AppleSystemUIFont")
-    elif sys.platform == "win32":
-        f.setFamilies(["Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI"])
-    else:
-        f.setFamilies(["Noto Sans CJK SC", "Ubuntu", "Cantarell", "DejaVu Sans", "sans-serif"])
-    f.setPixelSize(13)
+    f.setFamilies(_ui_families())
+    f.setPixelSize(14)
     app.setFont(f)
     app.setStyleSheet(QSS)
     return app

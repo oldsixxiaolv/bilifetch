@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BiliFetch · 原生跨平台 B 站视频与番剧下载工具</title>
+  <meta name="description" content="BiliFetch v1.2.0 支持 macOS、Windows 与 Linux，内置 64 连接并发池、多镜像测速热切换与毫秒级暂停续传，轻松保存 4K 番剧、多 P 视频与收藏夹。" />
+  <meta property="og:title" content="BiliFetch · 原生跨平台 B 站视频与番剧下载工具" />
+  <meta property="og:description" content="内置 64 连接并发池、多镜像测速热切换与 0.4ms 瞬时续传，原生支持 macOS、Windows 与 Linux。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://raw.githubusercontent.com/oldsixxiaolv/bilifetch/main/docs/screenshot.png" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%232B221D'/%3E%3Cpolygon points='24,42 14,10 44,28' fill='%23F0823A'/%3E%3Cpolygon points='76,42 86,10 56,28' fill='%23F0823A'/%3E%3Cellipse cx='50' cy='55' rx='30' ry='28' fill='%23F0823A'/%3E%3Cpath d='M50 90 L31 60 Q50 46 69 60 Z' fill='%23FFF6EC'/%3E%3Cellipse cx='37.5' cy='53' rx='4.5' ry='5.5' fill='%233A2A20'/%3E%3Cellipse cx='62.5' cy='53' rx='4.5' ry='5.5' fill='%233A2A20'/%3E%3Cellipse cx='50' cy='61.5' rx='4.5' ry='3.5' fill='%23E87598'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ================================================================
+       Layer 1 & 2: Spacing, Radius & Two-Layer Color System
+       Strictly following elayadesign/ai-design-skills
+       ================================================================ */
+    :root {
+      /* Spacing scale ONLY: 0, 2, 4, 8, 12, 16, 24, 32, 40, 48, 64, 80, 96px */
+      --sp-0: 0px;
+      --sp-25: 2px;
+      --sp-50: 4px;
+      --sp-75: 8px;
+      --sp-100: 12px;
+      --sp-200: 16px;
+      --sp-300: 24px;
+      --sp-400: 32px;
+      --sp-500: 40px;
+      --sp-600: 48px;
+      --sp-700: 64px;
+      --sp-800: 80px;
+      --sp-900: 96px;
+
+      /* Tailwind radius scale ONLY: 0, 2, 4, 6, 8, 12, 16, 24, 9999px */
+      --rad-0: 0px;
+      --rad-2: 2px;
+      --rad-4: 4px;
+      --rad-6: 6px;
+      --rad-8: 8px;
+      --rad-12: 12px;
+      --rad-16: 16px;
+      --rad-24: 24px;
+      --rad-full: 9999px;
+
+      /* Motion curve */
+      --ease-base: cubic-bezier(0.22, 1, 0.36, 1);
+
+      /* Font stack: single primary typeface + Geist Mono for data/code */
+      --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "STHeiti", "Microsoft YaHei UI", "Noto Sans CJK SC", sans-serif;
+      --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+      /* Z-index scale */
+      --z-base: 1;
+      --z-nav: 40;
+      --z-menu: 50;
+      --z-skip: 60;
+    }
+
+    /* Dark Mode (Approved flat dark surfaces ONLY: #000000, #181818, #1F1F1F, #272727, #313131) */
+    html[data-theme="dark"] {
+      --surface-canvas: #181818;
+      --surface-primary: #1F1F1F;
+      --surface-secondary: #272727;
+      --surface-hover: #313131;
+      --surface-deep: #000000;
+      --nav-glass: rgba(31, 31, 31, 0.82);
+      --menu-glass: rgba(24, 24, 24, 0.94);
+
+      --border-primary: #313131;
+      --border-subtle: #272727;
+
+      --text-primary: #F5F5F5;
+      --text-secondary: #C4C4C4;
+      --text-tertiary: #8E8E8E;
+      --text-muted-word: rgba(245, 245, 245, 0.28);
+
+      --hero-grad-start: #FFFFFF;
+      --hero-grad-end: #9B9B9B;
+
+      /* Single accent kept < 80% saturation */
+      --action-primary: #D96B8C;
+      --action-primary-hover: #E47D9C;
+      --action-primary-click: #C7597A;
+      --action-text: #FFFFFF;
+      --accent-subtle: #2B1D22;
+      --status-ok: #3BB87E;
+    }
+
+    /* Light Mode */
+    html[data-theme="light"] {
+      --surface-canvas: #F7F7F7;
+      --surface-primary: #FFFFFF;
+      --surface-secondary: #EFEFEF;
+      --surface-hover: #E5E5E5;
+      --surface-deep: #F7F7F7;
+      --nav-glass: rgba(255, 255, 255, 0.84);
+      --menu-glass: rgba(247, 247, 247, 0.96);
+
+      --border-primary: #E2E2E2;
+      --border-subtle: #ECECEC;
+
+      --text-primary: #181818;
+      --text-secondary: #525252;
+      --text-tertiary: #737373;
+      --text-muted-word: rgba(24, 24, 24, 0.26);
+
+      --hero-grad-start: #000000;
+      --hero-grad-end: #666666;
+
+      --action-primary: #C84B73;
+      --action-primary-hover: #B53E64;
+      --action-primary-click: #9E3355;
+      --action-text: #FFFFFF;
+      --accent-subtle: #FCEEF3;
+      --status-ok: #1F8A58;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--surface-canvas);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-style: normal;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--surface-canvas);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      transition: background-color 300ms var(--ease-base), color 300ms var(--ease-base);
+    }
+
+    /* ================================================================
+       Named Text Styles on Tailwind Default Type Scale
+       No italics anywhere. Cap weight at 600 (Semibold).
+       ================================================================ */
+    .heading-1 { font-size: 60px; line-height: 60px; font-weight: 600; letter-spacing: -0.025em; text-wrap: balance; }
+    .heading-2 { font-size: 48px; line-height: 48px; font-weight: 600; letter-spacing: -0.02em; text-wrap: balance; }
+    .heading-3 { font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.018em; text-wrap: balance; }
+    .heading-4 { font-size: 30px; line-height: 36px; font-weight: 600; letter-spacing: -0.015em; text-wrap: balance; }
+    .heading-5 { font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+    .heading-6 { font-size: 20px; line-height: 28px; font-weight: 600; text-wrap: balance; }
+
+    .title-1 { font-size: 20px; line-height: 28px; font-weight: 500; }
+    .title-2 { font-size: 18px; line-height: 28px; font-weight: 500; }
+    .title-3 { font-size: 16px; line-height: 24px; font-weight: 500; }
+    .title-4 { font-size: 14px; line-height: 20px; font-weight: 500; }
+    .title-5 { font-size: 12px; line-height: 16px; font-weight: 500; }
+
+    .body-1 { font-size: 16px; line-height: 24px; font-weight: 600; text-wrap: pretty; }
+    .body-2 { font-size: 16px; line-height: 24px; font-weight: 500; text-wrap: pretty; }
+    .body-3 { font-size: 16px; line-height: 24px; font-weight: 400; text-wrap: pretty; }
+    .body-4 { font-size: 14px; line-height: 20px; font-weight: 600; text-wrap: pretty; }
+    .body-5 { font-size: 14px; line-height: 20px; font-weight: 500; text-wrap: pretty; }
+    .body-6 { font-size: 14px; line-height: 20px; font-weight: 400; text-wrap: pretty; }
+
+    .button-lg  { font-size: 18px; line-height: 28px; font-weight: 600; }
+    .button-md  { font-size: 16px; line-height: 24px; font-weight: 600; }
+    .button-sm  { font-size: 14px; line-height: 20px; font-weight: 600; }
+    .button-xsm { font-size: 12px; line-height: 16px; font-weight: 600; }
+
+    .caption-1 { font-size: 14px; line-height: 20px; font-weight: 500; }
+    .caption-2 { font-size: 14px; line-height: 20px; font-weight: 400; }
+    .caption-3 { font-size: 12px; line-height: 16px; font-weight: 600; }
+    .caption-4 { font-size: 12px; line-height: 16px; font-weight: 500; }
+    .caption-5 { font-size: 12px; line-height: 16px; font-weight: 400; }
+
+    .tabular {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 768px) {
+      .heading-1 { font-size: 36px; line-height: 40px; }
+      .heading-2 { font-size: 30px; line-height: 36px; }
+      .heading-3 { font-size: 24px; line-height: 32px; }
+    }
+
+    /* Accessibility: Skip Link & Focus Ring (3:1+ visible 2px ring) */
+    .skip-link {
+      position: fixed;
+      top: var(--sp-200);
+      left: var(--sp-200);
+      z-index: var(--z-skip);
+      padding: var(--sp-75) var(--sp-100);
+      background: var(--action-primary);
+      color: var(--action-text);
+      border-radius: var(--rad-8);
+      text-decoration: none;
+      transform: translateY(-200%);
+      transition: transform 300ms var(--ease-base);
+    }
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--action-primary);
+      outline-offset: 2px;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* Container (1240px max-width) */
+    .container {
+      width: 100%;
+      max-width: 1240px;
+      margin-inline: auto;
+      padding-inline: var(--sp-300);
+    }
+    @media (max-width: 640px) {
+      .container {
+        padding-inline: var(--sp-200);
+      }
+    }
+
+    /* Full-width 1px flat separator element (never single-side card borders) */
+    .rule-divider {
+      width: 100%;
+      height: 1px;
+      background-color: var(--border-primary);
+    }
+
+    /* ================================================================
+       Floating Compact Translucent Navigation Bar (B7)
+       ================================================================ */
+    .nav-shell {
+      position: sticky;
+      top: var(--sp-200);
+      z-index: var(--z-nav);
+      display: flex;
+      justify-content: center;
+      padding-inline: var(--sp-200);
+      margin-top: var(--sp-200);
+    }
+
+    .floating-nav {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-300);
+      padding: var(--sp-75) var(--sp-100);
+      background-color: var(--nav-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--rad-12);
+    }
+
+    .brand-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-75);
+      color: var(--text-primary);
+    }
+
+    .brand-mark {
+      width: var(--sp-300);
+      height: var(--sp-300);
+      border-radius: var(--rad-6);
+      flex-shrink: 0;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-200);
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      padding: var(--sp-50) var(--sp-75);
+      border-radius: var(--rad-6);
+      transition: color 300ms var(--ease-base), background-color 300ms var(--ease-base);
+    }
+    .nav-links a:hover,
+    .nav-links a[aria-current="true"] {
+      color: var(--text-primary);
+      background-color: var(--surface-secondary);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-75);
+    }
+
+    /* Interactive Buttons (Main buttons: 8px vertical, 12px horizontal) */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-75);
+      padding: var(--sp-75) var(--sp-100);
+      border-radius: var(--rad-8);
+      border: 1px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 300ms var(--ease-base), background-color 300ms var(--ease-base), color 300ms var(--ease-base), border-color 300ms var(--ease-base);
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background-color: var(--action-primary);
+      color: var(--action-text);
+    }
+    .btn-primary:hover {
+      background-color: var(--action-primary-hover);
+    }
+    .btn-primary:active {
+      background-color: var(--action-primary-click);
+    }
+
+    .btn-hero {
+      padding: var(--sp-100) var(--sp-300);
+      border-radius: var(--rad-8);
+    }
+
+    .text-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-50);
+      color: var(--text-secondary);
+      padding: var(--sp-50) var(--sp-75);
+      border-radius: var(--rad-6);
+      transition: color 300ms var(--ease-base), transform 300ms var(--ease-base);
+    }
+    .text-link:hover {
+      color: var(--text-primary);
+      transform: translateX(2px);
+    }
+    .text-link:active {
+      transform: scale(0.98);
+    }
+
+    /* Mobile Hamburger & Full-Height Menu (B7) */
+    .menu-toggle {
+      display: none;
+      width: var(--sp-400);
+      height: var(--sp-400);
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid var(--border-primary);
+      border-radius: var(--rad-6);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .menu-toggle svg line {
+      transform-origin: center;
+      transition: transform 300ms var(--ease-base), opacity 300ms var(--ease-base);
+    }
+    .menu-toggle[aria-expanded="true"] .line-top {
+      transform: translateY(4px) rotate(45deg);
+    }
+    .menu-toggle[aria-expanded="true"] .line-bot {
+      transform: translateY(-4px) rotate(-45deg);
+    }
+
+    .mobile-panel {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-menu);
+      background-color: var(--menu-glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: var(--sp-800) var(--sp-300) var(--sp-400);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 300ms var(--ease-base);
+    }
+    .mobile-panel.is-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .mobile-panel-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-300);
+    }
+    .mobile-panel-links li {
+      opacity: 0;
+      transform: translateY(var(--sp-300));
+      transition: opacity 500ms var(--ease-base), transform 500ms var(--ease-base);
+    }
+    .mobile-panel.is-open .mobile-panel-links li {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 820px) {
+      .nav-links, .nav-desktop-cta {
+        display: none;
+      }
+      .menu-toggle {
+        display: inline-flex;
+      }
+      .floating-nav {
+        width: 100%;
+        max-width: 480px;
+        justify-content: space-between;
+      }
+    }
+
+    /* ================================================================
+       Hero Section (B5: left-to-right text gradient ONLY, max-w 680px)
+       ================================================================ */
+    .hero {
+      padding-top: var(--sp-700);
+      padding-bottom: var(--sp-800);
+    }
+
+    .hero-header {
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-300);
+    }
+
+    /* One gradient exception in the entire page: left-to-right on Hero H1 text */
+    .hero-gradient-title {
+      max-width: 680px;
+      background-image: linear-gradient(90deg, var(--hero-grad-start) 0%, var(--hero-grad-end) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-sub {
+      max-width: 680px;
+      color: var(--text-secondary);
+      max-inline-size: 62ch;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--sp-200);
+      padding-top: var(--sp-75);
+    }
+
+    .proof-strip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--sp-200);
+      color: var(--text-tertiary);
+    }
+    .proof-item {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-75);
+    }
+    .proof-dot {
+      width: var(--sp-75);
+      height: var(--sp-75);
+      border-radius: var(--rad-2);
+      background-color: var(--status-ok);
+    }
+
+    /* Hero Screenshot Frame: outer radius 16px, padding 8px -> inner radius 8px (16 - 8 = 8) */
+    .hero-stage {
+      margin-top: var(--sp-600);
+      background-color: var(--surface-primary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--rad-16);
+      padding: var(--sp-75);
+    }
+
+    .hero-stage-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--sp-75) var(--sp-100) var(--sp-100);
+      gap: var(--sp-100);
+      flex-wrap: wrap;
+    }
+
+    .preview-tabs {
+      display: inline-flex;
+      padding: var(--sp-25);
+      background-color: var(--surface-secondary);
+      border-radius: var(--rad-8);
+      gap: var(--sp-25);
+    }
+    /* Nested radius: outer 8px - gap 2px = inner 6px */
+    .preview-tab {
+      padding: var(--sp-50) var(--sp-100);
+      border-radius: var(--rad-6);
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background-color 300ms var(--ease-base), color 300ms var(--ease-base);
+    }
+    .preview-tab[aria-selected="true"] {
+      background-color: var(--surface-primary);
+      color: var(--text-primary);
+    }
+
+    .hero-shot-wrap {
+      position: relative;
+      border-radius: var(--rad-8);
+      overflow: hidden;
+      background-color: var(--surface-deep);
+      border: 1px solid var(--border-subtle);
+    }
+    .hero-shot-wrap img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* ================================================================
+       Mandatory Tagline Reveal Section (B11)
+       Word-by-word scroll activation from muted tone to full ink
+       ================================================================ */
+    .tagline-section {
+      padding-top: var(--sp-800);
+      padding-bottom: var(--sp-800);
+    }
+
+    .tagline-copy {
+      max-width: 680px;
+      display: flex;
+      flex-wrap: wrap;
+      column-gap: var(--sp-100);
+      row-gap: var(--sp-75);
+    }
+
+    .reveal-word {
+      color: var(--text-muted-word);
+      transition: color 300ms var(--ease-base);
+    }
+    .reveal-word.is-lit {
+      color: var(--text-primary);
+    }
+
+    /* ================================================================
+       Problem -> Solution & Asymmetric Bento Benefits (No 3-equal-cards)
+       ================================================================ */
+    .section-block {
+      padding-top: var(--sp-700);
+      padding-bottom: var(--sp-800);
+    }
+
+    .section-intro {
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-200);
+      margin-bottom: var(--sp-600);
+    }
+    .section-intro p {
+      color: var(--text-secondary);
+      max-inline-size: 62ch;
+    }
+
+    /* Problem vs Solution asymmetric split */
+    .contrast-grid {
+      display: grid;
+      grid-template-columns: 5fr 7fr;
+      gap: var(--sp-300);
+      margin-bottom: var(--sp-600);
+    }
+    @media (max-width: 860px) {
+      .contrast-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Card: outer radius 16px, padding 24px (gap<32 -> inner blocks radius 8px) */
+    .flat-card {
+      background-color: var(--surface-primary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--rad-16);
+      padding: var(--sp-300) var(--sp-300) var(--sp-400);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-200);
+    }
+
+    .flat-card-muted {
+      background-color: var(--surface-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--rad-16);
+      padding: var(--sp-300) var(--sp-300) var(--sp-400);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-200);
+    }
+
+    /* Asymmetric Bento Grid: Row 1 (7fr / 5fr), Row 2 (5fr / 7fr) */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--sp-300);
+    }
+    .bento-grid > *,
+    .contrast-grid > *,
+    .steps-layout > *,
+    .faq-grid > *,
+    .hero-header {
+      min-width: 0;
+    }
+    .bento-span-7 { grid-column: span 7; }
+    .bento-span-5 { grid-column: span 5; }
+    @media (max-width: 900px) {
+      .bento-span-7, .bento-span-5 {
+        grid-column: span 12;
+      }
+    }
+
+    .icon-box {
+      width: var(--sp-500);
+      height: var(--sp-500);
+      border-radius: var(--rad-8);
+      background-color: var(--surface-secondary);
+      border: 1px solid var(--border-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+    }
+
+    .metric-strip {
+      margin-top: auto;
+      padding-top: var(--sp-200);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-300);
+    }
+    .metric-pair {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-50);
+    }
+
+    /* Inner code/data surface inside 16px card with 24px padding -> nested radius 8px */
+    .inner-well {
+      background-color: var(--surface-canvas);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--rad-8);
+      padding: var(--sp-200);
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      overflow-x: auto;
+    }
+
+    /* ================================================================
+       How It Works (3 Steps + Multiplatform Download Matrix)
+       ================================================================ */
+    .steps-layout {
+      display: grid;
+      grid-template-columns: 5fr 7fr;
+      gap: var(--sp-500);
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .steps-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .step-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-300);
+    }
+    .step-item {
+      display: grid;
+      grid-template-columns: var(--sp-500) 1fr;
+      gap: var(--sp-200);
+      align-items: start;
+    }
+    .step-num {
+      width: var(--sp-500);
+      height: var(--sp-500);
+      border-radius: var(--rad-8);
+      background-color: var(--accent-subtle);
+      color: var(--action-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pkg-table {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-100);
+    }
+    /* Outer flat-card radius 16px, padding 24px; inner row radius 8px */
+    .pkg-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sp-200);
+      padding: var(--sp-200);
+      background-color: var(--surface-canvas);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--rad-8);
+      flex-wrap: wrap;
+      transition: border-color 300ms var(--ease-base), transform 300ms var(--ease-base);
+    }
+    .pkg-row:hover {
+      border-color: var(--action-primary);
+      transform: translateY(-1px);
+    }
+
+    /* ================================================================
+       FAQ: Side-by-Side Two-Column Plain Q&A Grid (No Accordions)
+       ================================================================ */
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      column-gap: var(--sp-600);
+      row-gap: var(--sp-500);
+    }
+    @media (max-width: 820px) {
+      .faq-grid {
+        grid-template-columns: 1fr;
+        row-gap: var(--sp-400);
+      }
+    }
+    .faq-entry {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-100);
+    }
+    .faq-entry p {
+      color: var(--text-secondary);
+      max-inline-size: 62ch;
+    }
+
+    /* ================================================================
+       Final CTA & Risk Reversal + Clean Footer
+       ================================================================ */
+    .final-cta-card {
+      background-color: var(--surface-primary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--rad-24);
+      padding: var(--sp-700) var(--sp-600);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--sp-300);
+    }
+    @media (max-width: 640px) {
+      .final-cta-card {
+        padding: var(--sp-500) var(--sp-300);
+      }
+    }
+
+    .site-footer {
+      padding-top: var(--sp-600);
+      padding-bottom: var(--sp-700);
+    }
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sp-300);
+      color: var(--text-tertiary);
+    }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--sp-300);
+    }
+    .footer-links a:hover {
+      color: var(--text-primary);
+    }
+
+    .theme-select-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-75);
+    }
+    .theme-select {
+      background-color: var(--surface-primary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--rad-6);
+      padding: var(--sp-50) var(--sp-100);
+      font-family: var(--font-sans);
+      cursor: pointer;
+    }
+
+    /* ================================================================
+       Scroll Reveal (B7: 32px rise + fade over 700ms via IntersectionObserver)
+       ================================================================ */
+    .reveal-section {
+      opacity: 0;
+      transform: translateY(var(--sp-400));
+      transition: opacity 700ms var(--ease-base), transform 700ms var(--ease-base);
+    }
+    .reveal-section.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+      .reveal-section,
+      .mobile-panel-links li {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+      .reveal-word {
+        color: var(--text-primary) !important;
+        transition: none !important;
+      }
+      .btn, .text-link, .pkg-row {
+        transition: opacity 200ms linear !important;
+      }
+      .btn:hover, .btn:active, .text-link:hover, .pkg-row:hover {
+        transform: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link button-sm">跳至主要内容</a>
+
+  <!-- Floating Translucent Navigation -->
+  <header class="nav-shell">
+    <nav class="floating-nav" aria-label="主导航">
+      <a href="#top" class="brand-link title-3">
+        <svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true">
+          <rect width="100" height="100" rx="24" fill="#2B221D"/>
+          <polygon points="24,42 14,10 44,28" fill="#F0823A"/>
+          <polygon points="76,42 86,10 56,28" fill="#F0823A"/>
+          <ellipse cx="50" cy="55" rx="30" ry="28" fill="#F0823A"/>
+          <path d="M50 90 L31 60 Q50 46 69 60 Z" fill="#FFF6EC"/>
+          <ellipse cx="37.5" cy="53" rx="4.5" ry="5.5" fill="#3A2A20"/>
+          <ellipse cx="62.5" cy="53" rx="4.5" ry="5.5" fill="#3A2A20"/>
+          <ellipse cx="50" cy="61.5" rx="4.5" ry="3.5" fill="#E87598"/>
+        </svg>
+        <span>BiliFetch</span>
+      </a>
+
+      <ul class="nav-links caption-1">
+        <li><a href="#top" aria-current="true">概览</a></li>
+        <li><a href="#benefits">核心架构</a></li>
+        <li><a href="#install">三步上手</a></li>
+        <li><a href="#faq">常见问题</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="https://github.com/oldsixxiaolv/bilifetch/releases/latest" class="btn btn-primary button-sm nav-desktop-cta">
+          下载 v1.2.0
+        </a>
+        <button type="button" class="menu-toggle" id="menu-btn" aria-label="打开菜单" aria-expanded="false" aria-controls="mobile-menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <line x1="4" y1="8" x2="20" y2="8" class="line-top" />
+            <line x1="4" y1="16" x2="20" y2="16" class="line-bot" />
+          </svg>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Full-Height Mobile Menu -->
+  <aside class="mobile-panel" id="mobile-menu" aria-hidden="true">
+    <ul class="mobile-panel-links heading-5">
+      <li style="transition-delay: 60ms;"><a href="#top" class="mobile-nav-link">概览</a></li>
+      <li style="transition-delay: 120ms;"><a href="#benefits" class="mobile-nav-link">核心架构</a></li>
+      <li style="transition-delay: 180ms;"><a href="#install" class="mobile-nav-link">三步上手</a></li>
+      <li style="transition-delay: 240ms;"><a href="#faq" class="mobile-nav-link">常见问题</a></li>
+      <li style="transition-delay: 300ms;"><a href="https://github.com/oldsixxiaolv/bilifetch" class="mobile-nav-link">GitHub 源码</a></li>
+    </ul>
+    <a href="https://github.com/oldsixxiaolv/bilifetch/releases/latest" class="btn btn-primary btn-hero button-md">
+      下载 BiliFetch v1.2.0
+    </a>
+  </aside>
+
+  <main id="main-content">
+    <!-- 1. Hero Section (Above the Fold) -->
+    <section id="top" class="hero container">
+      <div class="hero-header">
+        <h1 class="heading-1 hero-gradient-title">
+          满速拉取整季番剧与多P视频<br />随时毫秒级暂停续传
+        </h1>
+        <p class="body-3 hero-sub">
+          专为 macOS、Windows 与 Linux 打造的开源桌面与命令行下载器。内置 64 连接并发保活池与多镜像自动测速轮换，粘贴链接即可按真实画质保存本地 MP4。
+        </p>
+
+        <div class="hero-cta-group">
+          <a id="primary-download-btn" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-macOS.dmg" class="btn btn-primary btn-hero button-md">
+            <svg width="20" height="20" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M128 32v144" />
+              <polyline points="72 120 128 176 184 120" />
+              <line x1="40" y1="216" x2="216" y2="216" />
+            </svg>
+            <span id="primary-download-label">下载 macOS 安装包 (v1.2.0)</span>
+          </a>
+          <a href="#install" class="text-link body-5">
+            查看 Windows 与 Linux 发行包
+            <svg width="16" height="16" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="40" y1="128" x2="216" y2="128" />
+              <polyline points="144 56 216 128 144 200" />
+            </svg>
+          </a>
+        </div>
+
+        <div class="proof-strip caption-2">
+          <span class="proof-item">
+            <span class="proof-dot" aria-hidden="true"></span>
+            MIT 开源免费 · 零遥测与广告
+          </span>
+          <span class="tabular">64 并发保活连接</span>
+          <span class="tabular">0.4 ms 队列恢复响应</span>
+          <span class="tabular">SHA256 完整校验</span>
+        </div>
+      </div>
+
+      <!-- Product Visual Stage -->
+      <div class="hero-stage reveal-section">
+        <div class="hero-stage-bar">
+          <span class="caption-2" style="color: var(--text-tertiary);">BiliFetch v1.2.0 桌面端实机渲染截图</span>
+          <div class="preview-tabs" role="tablist" aria-label="界面主题预览切换">
+            <button type="button" role="tab" class="preview-tab caption-1" id="tab-dark" aria-selected="true" data-shot="./screenshot-dark.png">
+              深色外观 (#181818)
+            </button>
+            <button type="button" role="tab" class="preview-tab caption-1" id="tab-light" aria-selected="false" data-shot="./screenshot.png">
+              浅色外观 (#F7F7F7)
+            </button>
+          </div>
+        </div>
+        <div class="hero-shot-wrap">
+          <img id="hero-shot-img" src="./screenshot-dark.png" width="920" height="720" alt="BiliFetch 1.2.0 桌面端下载队列界面，展示 4K 超清进度、全部开始与全部暂停控制栏以及断点续传状态" />
+        </div>
+      </div>
+    </section>
+
+    <div class="container"><div class="rule-divider" role="separator"></div></div>
+
+    <!-- 2. Mandatory Tagline Reveal Section (B11: Word-by-word scroll activation) -->
+    <section class="tagline-section container" aria-label="设计宣言">
+      <p class="heading-2 tagline-copy" id="tagline-reveal">
+        <span class="reveal-word">单节点限速断流时</span>
+        <span class="reveal-word">自动轮换最快镜像续传</span>
+        <span class="reveal-word">点下暂停的那一帧</span>
+        <span class="reveal-word">立刻释放线程并留住每一字节进度</span>
+      </p>
+    </section>
+
+    <div class="container"><div class="rule-divider" role="separator"></div></div>
+
+    <!-- 3. Problem to Solution & Asymmetric Bento Benefits -->
+    <section id="benefits" class="section-block container reveal-section">
+      <div class="section-intro">
+        <h2 class="heading-3">解决多集下载里最恼人的四件事</h2>
+        <p class="body-3">
+          普通脚本在并发拉流时极易耗尽默认连接池，点停止时还要干等几十个阻塞线程超时退出。BiliFetch 从传输层到界面状态机做了端到端重构。
+        </p>
+      </div>
+
+      <!-- Problem vs Solution Contrast -->
+      <div class="contrast-grid">
+        <article class="flat-card-muted">
+          <span class="caption-3" style="color: var(--text-tertiary);">传统单镜像阻塞下载的痛点</span>
+          <h3 class="title-1">断流重下、停止卡死、剧集覆盖</h3>
+          <p class="body-6" style="color: var(--text-secondary);">
+            默认 10 容量连接池跑 32 路音视频线程会导致频繁重握手；命中慢速镜像只能眼看掉到 100 KB/s；没有副标题的番剧整季下载还会互相覆盖成同一个文件。
+          </p>
+        </article>
+        <article class="flat-card">
+          <span class="caption-3" style="color: var(--status-ok);">BiliFetch v1.2.0 的工程解法</span>
+          <h3 class="title-1">探速排序 + 分片热切换 + 零等待线程解耦</h3>
+          <p class="body-6" style="color: var(--text-secondary);">
+            启动下载前并发实测所有候选 CDN 节点吞吐量，任意 4 MiB 分片遇重置立即按已写入字节偏移切往下一镜像；界面状态机与收尾线程解耦，暂停与全部开始均在单帧内完成。
+          </p>
+        </article>
+      </div>
+
+      <!-- Asymmetric 12-Col Bento Grid (7/5 + 5/7) -->
+      <div class="bento-grid">
+        <article class="flat-card bento-span-7">
+          <div class="icon-box" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="48 128 96 80 160 144 208 96" />
+              <polyline points="168 96 208 96 208 136" />
+              <rect x="32" y="48" width="192" height="160" rx="16" />
+            </svg>
+          </div>
+          <h3 class="heading-5">64 连接保活池与多 CDN 分片自愈</h3>
+          <p class="body-6" style="color: var(--text-secondary);">
+            音视频双流各开 16 路 4 MiB HTTP Range 分片并发拉取，底层连接池扩容至 64 条长连接复用；默认绕过易重置连接的系统 TUN 代理，单镜像抖动时自动切向备用高速镜像。
+          </p>
+          <div class="metric-strip">
+            <div class="metric-pair">
+              <span class="heading-5 tabular">64</span>
+              <span class="caption-4" style="color: var(--text-tertiary);">TLS 保活连接上限</span>
+            </div>
+            <div class="metric-pair">
+              <span class="heading-5 tabular">4 MiB</span>
+              <span class="caption-4" style="color: var(--text-tertiary);">独立断点校验分片</span>
+            </div>
+            <div class="metric-pair">
+              <span class="heading-5 tabular">6 节点</span>
+              <span class="caption-4" style="color: var(--text-tertiary);">并发探速自动轮换</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="flat-card bento-span-5">
+          <div class="icon-box" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="56" y="48" width="52" height="160" rx="8" />
+              <rect x="148" y="48" width="52" height="160" rx="8" />
+            </svg>
+          </div>
+          <h3 class="heading-5">全部开始与全部暂停瞬时响应</h3>
+          <p class="body-6" style="color: var(--text-secondary);">
+            点击「全部暂停」在 13.15 ms 内保留当前进度百分比并释放工作池；点击「全部开始」在 0.40 ms 内拉起新工作线程读取磁盘断点继续传输。
+          </p>
+          <div class="inner-well caption-4">
+            wait → run → pause (保留 63.0% 进度) → 继续续传
+          </div>
+        </article>
+
+        <article class="flat-card bento-span-5">
+          <div class="icon-box" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="32" y="56" width="192" height="144" rx="16" />
+              <polygon points="112 100 160 128 112 156 112 100" />
+            </svg>
+          </div>
+          <h3 class="heading-5">番剧选集去重与失效收藏清理</h3>
+          <p class="body-6" style="color: var(--text-secondary);">
+            自动区分正片与花絮 PV，统一补齐「第01集」零填充序号；解析收藏夹时自动剔除已失效视频，支持 b23.tv 合集短链直接展开。
+          </p>
+        </article>
+
+        <article class="flat-card bento-span-7">
+          <div class="icon-box" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="40" y="40" width="72" height="72" rx="8" />
+              <rect x="144" y="40" width="72" height="72" rx="8" />
+              <rect x="40" y="144" width="72" height="72" rx="8" />
+              <path d="M144 144h36v72M180 180h36M144 216h36" />
+            </svg>
+          </div>
+          <h3 class="heading-5">手机扫码解锁 4K 与真实画质回显</h3>
+          <p class="body-6" style="color: var(--text-secondary);">
+            内置 B 站客户端扫码登录，Cookie 仅保存在本机应用目录；开始下载后实时回传服务端实际下发的清晰度档位（如 4K、1080P60 或未登录 480P），拒绝虚假标签。
+          </p>
+          <div class="inner-well caption-4">
+            ffmpeg 无损流拷贝混流 · 零重编码画质损耗 · 同目录重名自动追加 BV 编号
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <div class="container"><div class="rule-divider" role="separator"></div></div>
+
+    <!-- 4. How It Works & Multiplatform Download Matrix -->
+    <section id="install" class="section-block container reveal-section">
+      <div class="section-intro">
+        <h2 class="heading-3">三步把整季内容存进硬盘</h2>
+        <p class="body-3">
+          图形界面与终端命令行共享同一套解析与分片引擎，覆盖 macOS、Windows 与主流 Linux 发行版。
+        </p>
+      </div>
+
+      <div class="steps-layout">
+        <ol class="step-list">
+          <li class="step-item">
+            <span class="step-num button-md tabular">01</span>
+            <div>
+              <h3 class="title-2">粘贴任意 B 站链接或 BV 号</h3>
+              <p class="body-6" style="color: var(--text-secondary); margin-top: var(--sp-50);">
+                切回窗口时自动识别剪贴板中的视频、番剧 ep/ss、UP 主合集、收藏夹或 b23.tv 短链，回车即可解析。
+              </p>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num button-md tabular">02</span>
+            <div>
+              <h3 class="title-2">在选集面板勾选目标剧集或仅音频</h3>
+              <p class="body-6" style="color: var(--text-secondary); margin-top: var(--sp-50);">
+                支持关键词搜索、区间连选、花絮一键折叠以及仅提取高品质音频轨。
+              </p>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num button-md tabular">03</span>
+            <div>
+              <h3 class="title-2">满速并发拉取并自动无损封装 MP4</h3>
+              <p class="body-6" style="color: var(--text-secondary); margin-top: var(--sp-50);">
+                队列支持随时全部暂停与全部开始，下载完成后双击条目即可在访达或资源管理器中定位文件。
+              </p>
+            </div>
+          </li>
+        </ol>
+
+        <div class="flat-card">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-200); flex-wrap: wrap;">
+            <h3 class="title-1">BiliFetch v1.2.0 官方发行包</h3>
+            <a href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/SHA256SUMS" class="text-link caption-1 tabular">
+              查看 SHA256SUMS
+            </a>
+          </div>
+
+          <div class="pkg-table">
+            <a class="pkg-row" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-macOS.dmg">
+              <div>
+                <div class="body-4">macOS 桌面镜像 (.dmg)</div>
+                <div class="caption-5" style="color: var(--text-tertiary);">自包含 BiliFetch.app，拖入应用程序即用（无需安装 Python）</div>
+              </div>
+              <span class="caption-3 tabular" style="color: var(--action-primary);">51.8 MB · 下载</span>
+            </a>
+
+            <a class="pkg-row" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-Windows-x64.zip">
+              <div>
+                <div class="body-4">Windows 64 位免安装独立版 (.zip)</div>
+                <div class="caption-5" style="color: var(--text-tertiary);">内置 BiliFetch.exe 与 ffmpeg.exe，解压双击即用</div>
+              </div>
+              <span class="caption-3 tabular" style="color: var(--action-primary);">46.5 MB · 下载</span>
+            </a>
+
+            <a class="pkg-row" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/bilifetch_1.2.0_all.deb">
+              <div>
+                <div class="body-4">Debian / Ubuntu 安装包 (.deb)</div>
+                <div class="caption-5" style="color: var(--text-tertiary);">注册应用菜单图标与终端 bilifetch 命令</div>
+              </div>
+              <span class="caption-3 tabular" style="color: var(--action-primary);">518 KB · 下载</span>
+            </a>
+
+            <a class="pkg-row" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-Linux-x64.tar.gz">
+              <div>
+                <div class="body-4">Linux x64 免依赖独立归档 (.tar.gz)</div>
+                <div class="caption-5" style="color: var(--text-tertiary);">适配 Arch、Fedora、openSUSE 等任意发行版</div>
+              </div>
+              <span class="caption-3 tabular" style="color: var(--action-primary);">73.7 MB · 下载</span>
+            </a>
+          </div>
+
+          <div class="inner-well caption-4">
+            # 终端一行命令直接下载合集或单集<br />
+            bilifetch "https://www.bilibili.com/bangumi/play/ep1633643"
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="container"><div class="rule-divider" role="separator"></div></div>
+
+    <!-- 5. FAQ Section (Plain 2-Column List for Readability & AEO, No Accordions) -->
+    <section id="faq" class="section-block container reveal-section">
+      <div class="section-intro">
+        <h2 class="heading-3">常见问题解答</h2>
+        <p class="body-3">
+          安装依赖、高清画质权限与网络代理相关的说明都在这里。
+        </p>
+      </div>
+
+      <div class="faq-grid">
+        <article class="faq-entry">
+          <h3 class="title-3">macOS 首次打开提示无法验证开发者怎么办？</h3>
+          <p class="body-6">
+            这是开源个人应用未购买商业公证所致。在访达的「应用程序」中右键点击 BiliFetch.app，选择「打开」并再次确认即可，后续双击不再弹窗；使用 Homebrew Cask 安装则会自动移除隔离属性。
+          </p>
+        </article>
+
+        <article class="faq-entry">
+          <h3 class="title-3">为什么合并音视频需要安装 FFmpeg？</h3>
+          <p class="body-6">
+            B 站高清视频采用 DASH 音视频分离流传输。Windows 独立包已内置 ffmpeg.exe；macOS 只需执行一次 brew install ffmpeg，Linux 执行 apt install ffmpeg，即可完成毫秒级无损流拷贝合并。
+          </p>
+        </article>
+
+        <article class="faq-entry">
+          <h3 class="title-3">扫码登录安全吗？Cookie 保存在哪里？</h3>
+          <p class="body-6">
+            扫码流程直接与 B 站官方接口通信，不经过任何第三方服务器。登录凭据仅保存在你本机系统的应用配置目录（settings.json）中，随时可在右上角账号菜单一键退出清除。
+          </p>
+        </article>
+
+        <article class="faq-entry">
+          <h3 class="title-3">为什么有时候选了最高画质实际下到的是 480P 或 1080P？</h3>
+          <p class="body-6">
+            可获取的最高清晰度取决于当前账号权限：未登录状态官方仅下发 480P，普通登录解锁 1080P，大会员解锁 1080P60、4K 与杜比视界。下载行会如实显示实际拿到的清晰度。
+          </p>
+        </article>
+
+        <article class="faq-entry">
+          <h3 class="title-3">开启科学上网或 TUN 代理后下载变慢怎么办？</h3>
+          <p class="body-6">
+            部分海外代理或 TUN 虚拟网卡会劫持并重置国内 CDN 连接。BiliFetch 默认绕过系统环境变量直连国内 CDN；如确实需要走代理，可在右上角设置弹窗中手动填写代理地址。
+          </p>
+        </article>
+
+        <article class="faq-entry">
+          <h3 class="title-3">中途暂停或关闭软件后，之前下好的分片还在吗？</h3>
+          <p class="body-6">
+            在的。每个 4 MiB 分片写入完成后都会实时记录在同目录的 .part.state 文件中。无论点击「全部暂停」还是下次重开软件重新提交，都会直接跳过已完成分片继续传输。
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 6. Risk Reversal & Final Identical CTA -->
+    <section class="section-block container reveal-section">
+      <div class="final-cta-card">
+        <h2 class="heading-3">开源免费，装上就能满速开下</h2>
+        <p class="body-3" style="color: var(--text-secondary); max-width: 680px;">
+          遵循 MIT 开源协议，无需注册外部账号，无订阅与内购限制，所有源码与构建脚本在 GitHub 完全公开可查。
+        </p>
+        <div class="hero-cta-group">
+          <a id="bottom-download-btn" href="https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-macOS.dmg" class="btn btn-primary btn-hero button-md">
+            <span id="bottom-download-label">下载 macOS 安装包 (v1.2.0)</span>
+          </a>
+          <a href="https://github.com/oldsixxiaolv/bilifetch" class="text-link body-5">
+            浏览 GitHub 仓库源码
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="container"><div class="rule-divider" role="separator"></div></div>
+
+  <!-- Semantic Footer with Legal Notice & Theme Selector Dropdown -->
+  <footer class="site-footer container">
+    <div class="footer-inner caption-2">
+      <div>
+        BiliFetch v1.2.0 · MIT License · 仅供个人学习与技术研究，请遵守内容平台用户协议。
+      </div>
+
+      <div class="footer-links">
+        <a href="https://github.com/oldsixxiaolv/bilifetch/releases">历史版本</a>
+        <a href="https://github.com/oldsixxiaolv/bilifetch/blob/main/LICENSE">开源许可与免责声明</a>
+        <a href="https://github.com/oldsixxiaolv/bilifetch/issues">问题反馈</a>
+        <label class="theme-select-wrap" for="theme-select">
+          <span>外观</span>
+          <select id="theme-select" class="theme-select caption-2" aria-label="选择页面主题外观">
+            <option value="dark">深色</option>
+            <option value="light">浅色</option>
+            <option value="system">跟随系统</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Structured FAQ Schema for AEO / SEO -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "BiliFetch",
+    "operatingSystem": "macOS, Windows, Linux",
+    "applicationCategory": "MultimediaApplication",
+    "softwareVersion": "1.2.0",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" }
+  }
+  </script>
+
+  <script>
+    (function () {
+      // 1. OS-aware single primary CTA (keeps top & bottom CTAs identical per A2/A4)
+      var ua = navigator.userAgent || "";
+      var dlUrl = "https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-macOS.dmg";
+      var dlText = "下载 macOS 安装包 (v1.2.0)";
+      if (/Win/i.test(ua)) {
+        dlUrl = "https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/BiliFetch-1.2.0-Windows-x64.zip";
+        dlText = "下载 Windows 免安装版 (v1.2.0)";
+      } else if (/Linux/i.test(ua) && !/Android/i.test(ua)) {
+        dlUrl = "https://github.com/oldsixxiaolv/bilifetch/releases/download/v1.2.0/bilifetch_1.2.0_all.deb";
+        dlText = "下载 Linux 安装包 (v1.2.0)";
+      }
+      var topBtn = document.getElementById("primary-download-btn");
+      var topLbl = document.getElementById("primary-download-label");
+      var botBtn = document.getElementById("bottom-download-btn");
+      var botLbl = document.getElementById("bottom-download-label");
+      if (topBtn && topLbl) { topBtn.href = dlUrl; topLbl.textContent = dlText; }
+      if (botBtn && botLbl) { botBtn.href = dlUrl; botLbl.textContent = dlText; }
+
+      // 2. Theme Dropdown + System Preference
+      var themeSelect = document.getElementById("theme-select");
+      var root = document.documentElement;
+      function applyTheme(pref) {
+        var resolved = pref;
+        if (pref === "system") {
+          resolved = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        }
+        root.setAttribute("data-theme", resolved);
+      }
+      if (themeSelect) {
+        themeSelect.addEventListener("change", function () {
+          applyTheme(themeSelect.value);
+        });
+      }
+
+      // 3. Screenshot Theme Preview Switcher
+      var shotImg = document.getElementById("hero-shot-img");
+      var tabs = document.querySelectorAll(".preview-tab");
+      tabs.forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          tabs.forEach(function (t) { t.setAttribute("aria-selected", "false"); });
+          tab.setAttribute("aria-selected", "true");
+          if (shotImg && tab.dataset.shot) {
+            shotImg.src = tab.dataset.shot;
+          }
+        });
+      });
+
+      // 4. Mobile Full-Height Menu Toggle
+      var menuBtn = document.getElementById("menu-btn");
+      var mobileMenu = document.getElementById("mobile-menu");
+      function setMenuOpen(open) {
+        if (!menuBtn || !mobileMenu) return;
+        menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+        mobileMenu.setAttribute("aria-hidden", open ? "false" : "true");
+        mobileMenu.classList.toggle("is-open", open);
+      }
+      if (menuBtn) {
+        menuBtn.addEventListener("click", function () {
+          var isOpen = menuBtn.getAttribute("aria-expanded") === "true";
+          setMenuOpen(!isOpen);
+        });
+      }
+      document.querySelectorAll(".mobile-nav-link").forEach(function (link) {
+        link.addEventListener("click", function () { setMenuOpen(false); });
+      });
+
+      // 5. Scroll Reveals via IntersectionObserver (B7: reveal once, never replay)
+      var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var revealEls = document.querySelectorAll(".reveal-section");
+      if (reducedMotion || !("IntersectionObserver" in window)) {
+        revealEls.forEach(function (el) { el.classList.add("is-visible"); });
+      } else {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              io.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.12 });
+        revealEls.forEach(function (el) { io.observe(el); });
+      }
+
+      // 6. Mandatory Word-by-Word Tagline Scroll Reveal (B11: rAF throttled)
+      var tagline = document.getElementById("tagline-reveal");
+      var words = tagline ? Array.prototype.slice.call(tagline.querySelectorAll(".reveal-word")) : [];
+      if (reducedMotion) {
+        words.forEach(function (w) { w.classList.add("is-lit"); });
+      } else if (words.length > 0) {
+        var ticking = false;
+        function updateWords() {
+          ticking = false;
+          var vh = window.innerHeight || document.documentElement.clientHeight;
+          var startY = vh * 0.82;
+          var endY = vh * 0.36;
+          var rect = tagline.getBoundingClientRect();
+          var progress = (startY - rect.top) / Math.max(1, startY - endY);
+          var clamped = Math.max(0, Math.min(1, progress));
+          var activeCount = Math.round(clamped * words.length);
+          for (var i = 0; i < words.length; i++) {
+            words[i].classList.toggle("is-lit", i < activeCount);
+          }
+        }
+        window.addEventListener("scroll", function () {
+          if (!ticking) {
+            ticking = true;
+            window.requestAnimationFrame(updateWords);
+          }
+        }, { passive: true });
+        updateWords();
+      }
+    })();
+  </script>
+</body>
+</html>

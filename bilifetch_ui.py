@@ -65,16 +65,16 @@ PRIMITIVES = {
     "slate_100": "#F1F2F3",
     "slate_50": "#F6F7F8",
     "white": "#FFFFFF",
-    # Dark neutrals
-    "zinc_950": "#111318",
-    "zinc_900": "#181B22",
-    "zinc_850": "#1F232C",
-    "zinc_800": "#252A34",
-    "zinc_700": "#2F3542",
-    "zinc_600": "#3B4252",
-    "zinc_400": "#7A8291",
-    "zinc_300": "#A9B1BC",
-    "zinc_100": "#F2F4F8",
+    # Dark neutrals (Elaya ai-design-skills pure neutral dark steps: #000000 / #181818 / #1F1F1F / #272727 / #313131)
+    "dark_1000": "#000000",
+    "dark_870": "#181818",
+    "dark_850": "#1F1F1F",
+    "dark_800": "#272727",
+    "dark_750": "#313131",
+    "dark_700": "#3D3D3D",
+    "dark_500": "#8A8A8A",
+    "dark_200": "#BDBDBD",
+    "dark_50": "#F5F5F5",
 }
 
 # ================================================================
@@ -108,8 +108,9 @@ THEMES = {
         "badge_inactive_bg": "#E4E6E9",
         "line": PRIMITIVES["slate_200"],
         "track": "#EDEEF0",
-        "dark_log": "#16181D",
-        "dark_log_fg": "#B4BAC4",
+        "dark_log": PRIMITIVES["slate_50"],      # 浅色主题保持浅色同调表面，拒绝突兀黑洞块
+        "dark_log_fg": PRIMITIVES["slate_900"],
+        "log_border": PRIMITIVES["slate_200"],
         "shimmer_base": "#EFF1F3",
         "shimmer_hi": "#FAFBFD",
         "fox_tile": "#FFF1E6",
@@ -125,44 +126,45 @@ THEMES = {
     },
     "dark": {
         "name": "dark",
-        "accent": PRIMITIVES["pink_500"],
-        "accent_hover": PRIMITIVES["pink_400"],
-        "accent_press": PRIMITIVES["pink_600"],
-        "accent_soft": PRIMITIVES["pink_950"],
-        "accent_disabled": "#6E3548",
-        "blue": "#20B8F0",
-        "green": "#36C982",
-        "red": "#F76C68",
-        "orange": "#FFAD42",
-        "ink": PRIMITIVES["zinc_100"],           # 对比度 15.1:1
-        "ink_2": PRIMITIVES["zinc_300"],         # 对比度 7.2:1 (>= 4.5:1)
-        "ink_3": PRIMITIVES["zinc_400"],
-        "ink_disabled": "#555C69",
-        "page": PRIMITIVES["zinc_950"],
-        "card": PRIMITIVES["zinc_900"],
-        "card_border": "#2A2F3B",
-        "field": PRIMITIVES["zinc_800"],
-        "field_hover": PRIMITIVES["zinc_700"],
-        "field_press": PRIMITIVES["zinc_600"],
-        "field_focus_bg": PRIMITIVES["zinc_850"],
-        "row_hover": "#202530",
-        "pill_bg": "#303644",
-        "badge_inactive_bg": "#2E3442",
-        "line": "#2B303C",
-        "track": "#282D38",
-        "dark_log": "#0E1014",
-        "dark_log_fg": "#B4BAC4",
-        "shimmer_base": "#232833",
-        "shimmer_hi": "#2F3645",
-        "fox_tile": "#2E2420",
+        "accent": "#E87598",                     # 暗色模式饱和度 < 80%（HSV S=50%）
+        "accent_hover": "#F088A7",
+        "accent_press": "#D66084",
+        "accent_soft": "#331D24",
+        "accent_disabled": "#5E3543",
+        "blue": "#3BAFDA",
+        "green": "#3BB87E",
+        "red": "#E56B67",
+        "orange": "#E8A246",
+        "ink": PRIMITIVES["dark_50"],            # 对比度 15.8:1
+        "ink_2": PRIMITIVES["dark_200"],         # 对比度 7.9:1 (>= 4.5:1)
+        "ink_3": PRIMITIVES["dark_500"],
+        "ink_disabled": "#595959",
+        "page": PRIMITIVES["dark_870"],          # #181818
+        "card": PRIMITIVES["dark_850"],          # #1F1F1F
+        "card_border": PRIMITIVES["dark_750"],   # #313131
+        "field": PRIMITIVES["dark_800"],         # #272727
+        "field_hover": PRIMITIVES["dark_750"],   # #313131
+        "field_press": PRIMITIVES["dark_700"],
+        "field_focus_bg": PRIMITIVES["dark_870"],
+        "row_hover": PRIMITIVES["dark_800"],
+        "pill_bg": PRIMITIVES["dark_750"],
+        "badge_inactive_bg": PRIMITIVES["dark_750"],
+        "line": PRIMITIVES["dark_750"],
+        "track": PRIMITIVES["dark_800"],
+        "dark_log": PRIMITIVES["dark_870"],      # #181818
+        "dark_log_fg": "#D4D4D4",
+        "log_border": PRIMITIVES["dark_750"],
+        "shimmer_base": PRIMITIVES["dark_800"],
+        "shimmer_hi": PRIMITIVES["dark_750"],
+        "fox_tile": "#2B221D",
         "state_colors": {
-            "wait": (PRIMITIVES["zinc_400"], PRIMITIVES["zinc_800"]),
-            "run": ("#20B8F0", PRIMITIVES["blue_950"]),
-            "merge": ("#FFAD42", PRIMITIVES["orange_950"]),
-            "pause": ("#FFAD42", PRIMITIVES["orange_950"]),
-            "done": ("#36C982", PRIMITIVES["green_950"]),
-            "fail": ("#F76C68", PRIMITIVES["red_950"]),
-            "cancel": (PRIMITIVES["zinc_400"], PRIMITIVES["zinc_800"]),
+            "wait": (PRIMITIVES["dark_500"], PRIMITIVES["dark_800"]),
+            "run": ("#3BAFDA", "#1A2B33"),
+            "merge": ("#E8A246", "#2E2418"),
+            "pause": ("#E8A246", "#2E2418"),
+            "done": ("#3BB87E", "#192B22"),
+            "fail": ("#E56B67", "#2E1C1D"),
+            "cancel": (PRIMITIVES["dark_500"], PRIMITIVES["dark_800"]),
         },
     },
 }
@@ -297,13 +299,13 @@ def _make_bezier(x1, y1, x2, y2):
     return c
 
 
-_EASE_OUT = _make_bezier(0.23, 1.0, 0.32, 1.0)
+_EASE_OUT = _make_bezier(0.22, 1.0, 0.36, 1.0)
 _EASE_IN_OUT = _make_bezier(0.77, 0.0, 0.175, 1.0)
 _EASE_DRAWER = _make_bezier(0.32, 0.72, 0.0, 1.0)
 
 
 def ease_out():
-    """强 ease-out：cubic-bezier(0.23, 1, 0.32, 1)，用于入场、按压反馈、弹层。"""
+    """强减速曲线：cubic-bezier(0.22, 1, 0.36, 1)（ai-design-skills 标准曲线）。"""
     return QEasingCurve(_EASE_OUT)
 
 
@@ -326,32 +328,105 @@ def eval_ease_out(t):
     return _EASE_OUT.valueForProgress(t)
 
 
-# ---------------------------------------------------------------- 字体与排版（Optical Sizing & Tabular Nums）
-def ui_font(px=13, weight=QFont.Normal, tabular=False):
-    """构建符合 Apple Typography 规范的界面字体：按字号微调字距（tracking）。"""
-    f = QFont()
+# ---------------------------------------------------------------- 字体与排版（Tailwind Type Scale & Tabular Nums）
+_TYPE_SCALE_STEPS = (12, 14, 16, 18, 20, 24, 30, 36, 48, 60)
+
+
+def _snap_type_scale(px):
+    """将任意字号收敛至 Tailwind 标准字阶（偏离档位时向下一档吸附，最低 12px）。"""
+    if px <= 12:
+        return 12
+    best = 12
+    for step in _TYPE_SCALE_STEPS:
+        if step <= px:
+            best = step
+        else:
+            break
+    return best
+
+
+def _cap_weight(weight):
+    """ai-design-skills 规范：禁止超粗字重，封顶 Semibold (DemiBold)。"""
+    return min(int(weight), int(QFont.DemiBold))
+
+
+_UI_FAMILIES_CACHE = None
+_TAB_FAMILIES_CACHE = None
+
+
+def _filter_installed_fonts(candidates, fallback):
+    try:
+        from PyQt5.QtGui import QFontDatabase
+        avail = set(QFontDatabase().families())
+        picked = [f for f in candidates if f in avail or f.startswith(".")]
+        return picked or fallback
+    except Exception:
+        return fallback
+
+
+def _ui_families():
+    global _UI_FAMILIES_CACHE
+    if _UI_FAMILIES_CACHE is None:
+        if sys.platform == "darwin":
+            _UI_FAMILIES_CACHE = _filter_installed_fonts(
+                ["Geist", "Manrope", "PingFang SC", ".AppleSystemUIFont"],
+                ["PingFang SC", ".AppleSystemUIFont"],
+            )
+        elif sys.platform == "win32":
+            _UI_FAMILIES_CACHE = _filter_installed_fonts(
+                ["Geist", "Manrope", "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI"],
+                ["Microsoft YaHei UI", "Segoe UI"],
+            )
+        else:
+            _UI_FAMILIES_CACHE = _filter_installed_fonts(
+                ["Geist", "Manrope", "Noto Sans CJK SC", "Ubuntu", "Cantarell", "DejaVu Sans"],
+                ["Noto Sans CJK SC", "Ubuntu", "DejaVu Sans"],
+            )
+    return _UI_FAMILIES_CACHE
+
+
+def ui_font(px=14, weight=QFont.Normal, tabular=False):
+    """构建符合 ai-design-skills 字阶规范的界面字体：无斜体、封顶 Semibold、大标题微收字距。"""
     if tabular:
         return tabular_font(px, weight)
-    f.setPixelSize(px)
-    f.setWeight(weight)
-    if px >= 18:
+    snapped = _snap_type_scale(px)
+    f = QFont()
+    f.setFamilies(_ui_families())
+    f.setPixelSize(snapped)
+    f.setWeight(_cap_weight(weight))
+    f.setStyle(QFont.StyleNormal)
+    if snapped >= 18:
         f.setLetterSpacing(QFont.AbsoluteSpacing, -0.3)
-    elif px <= 11:
-        f.setLetterSpacing(QFont.AbsoluteSpacing, 0.15)
+    elif snapped <= 12:
+        f.setLetterSpacing(QFont.AbsoluteSpacing, 0.1)
     return f
 
 
 def tabular_font(px=12, weight=QFont.Normal):
-    """用于实时刷新的数字（百分比、网速、剩余时间、大小）：采用等宽数字的无衬线 UI 字体，既与界面融合又彻底消除跳字抖动。"""
+    """用于实时刷新的数字（百分比、网速、剩余时间、大小）：排除 Inter/Arial/Helvetica。"""
+    global _TAB_FAMILIES_CACHE
+    if _TAB_FAMILIES_CACHE is None:
+        if sys.platform == "darwin":
+            _TAB_FAMILIES_CACHE = _filter_installed_fonts(
+                ["Geist Mono", "Geist", "Menlo", "PingFang SC", ".AppleSystemUIFont"],
+                ["Menlo", "PingFang SC", ".AppleSystemUIFont"],
+            )
+        elif sys.platform == "win32":
+            _TAB_FAMILIES_CACHE = _filter_installed_fonts(
+                ["Geist Mono", "Geist", "Consolas", "Segoe UI", "Microsoft YaHei UI"],
+                ["Consolas", "Segoe UI", "Microsoft YaHei UI"],
+            )
+        else:
+            _TAB_FAMILIES_CACHE = _filter_installed_fonts(
+                ["Geist Mono", "Geist", "Ubuntu Mono", "Noto Sans CJK SC", "DejaVu Sans"],
+                ["DejaVu Sans"],
+            )
+    snapped = _snap_type_scale(px)
     f = QFont()
-    if sys.platform == "darwin":
-        f.setFamilies(["Helvetica Neue", "PingFang SC", ".AppleSystemUIFont"])
-    elif sys.platform == "win32":
-        f.setFamilies(["Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "Arial"])
-    else:
-        f.setFamilies(["Inter", "Ubuntu", "Noto Sans CJK SC", "Liberation Sans", "DejaVu Sans", "Arial"])
-    f.setPixelSize(px)
-    f.setWeight(weight)
+    f.setFamilies(_TAB_FAMILIES_CACHE)
+    f.setPixelSize(snapped)
+    f.setWeight(_cap_weight(weight))
+    f.setStyle(QFont.StyleNormal)
     return f
 
 
@@ -360,16 +435,16 @@ _QSS_TEMPLATE = """
 QWidget { color: %INK%; }
 QMainWindow, QDialog { background: %PAGE%; }
 QToolTip {
-    background: rgba(24, 25, 28, 242);
-    color: #F6F7F8;
-    border: 1px solid rgba(255, 255, 255, 24);
-    padding: 5px 9px;
-    border-radius: 7px;
+    background: #1F1F1F;
+    color: #F5F5F5;
+    border: 1px solid #313131;
+    padding: 4px 8px;
+    border-radius: 6px;
     font-size: 12px;
 }
 
-QLabel#h1    { font-size: 20px; font-weight: 700; color: %INK%; }
-QLabel#h2    { font-size: 15px; font-weight: 600; color: %INK%; }
+QLabel#h1    { font-size: 20px; font-weight: 600; color: %INK%; }
+QLabel#h2    { font-size: 16px; font-weight: 600; color: %INK%; }
 QLabel#muted { font-size: 12px; color: %INK_3%; }
 QLabel#sub   { font-size: 12px; color: %INK_2%; }
 QLabel#err   { font-size: 12px; color: %RED%; font-weight: 500; }
@@ -378,47 +453,47 @@ QLineEdit {
     background: %FIELD%;
     color: %INK%;
     border: 1.5px solid transparent;
-    border-radius: 10px;
+    border-radius: 8px;
     padding: 0 12px;
     min-height: 36px;
-    font-size: 13px;
+    font-size: 14px;
     selection-background-color: %ACCENT%;
     selection-color: #ffffff;
 }
 QLineEdit:hover { background: %FIELD_HOVER%; }
 QLineEdit:focus { background: %FIELD_FOCUS_BG%; border: 1.5px solid %ACCENT%; }
 QLineEdit[invalid="true"] { border: 1.5px solid %RED%; background: %FIELD_FOCUS_BG%; }
-QLineEdit#bigInput { min-height: 46px; border-radius: 12px; padding: 0 16px; font-size: 14px; }
-QLineEdit#search { min-height: 32px; border-radius: 9px; }
+QLineEdit#bigInput { min-height: 48px; border-radius: 8px; padding: 0 16px; font-size: 14px; }
+QLineEdit#search { min-height: 32px; border-radius: 8px; font-size: 14px; }
 
 QComboBox {
     background: %FIELD%;
     color: %INK%;
     border: 1.5px solid transparent;
-    border-radius: 10px;
-    padding: 0 30px 0 12px;
+    border-radius: 8px;
+    padding: 0 32px 0 12px;
     min-height: 36px;
     min-width: 96px;
-    font-size: 13px;
+    font-size: 14px;
 }
 QComboBox:hover { background: %FIELD_HOVER%; }
 QComboBox:focus { border: 1.5px solid %ACCENT%; background: %FIELD_FOCUS_BG%; }
-QComboBox::drop-down { border: none; width: 22px; }
+QComboBox::drop-down { border: none; width: 24px; }
 QComboBox::down-arrow { image: none; }
 QComboBox QAbstractItemView {
     background: %CARD%;
     color: %INK%;
     border: 1px solid %LINE%;
-    border-radius: 10px;
+    border-radius: 8px;
     padding: 4px;
     outline: none;
     selection-background-color: %ACCENT_SOFT%;
     selection-color: %ACCENT%;
 }
 
-QCheckBox { color: %INK_2%; spacing: 7px; font-size: 13px; }
+QCheckBox { color: %INK_2%; spacing: 8px; font-size: 14px; }
 QCheckBox::indicator {
-    width: 16px; height: 16px; border-radius: 5px;
+    width: 16px; height: 16px; border-radius: 4px;
     border: 1.5px solid %INK_3%; background: %CARD%;
 }
 QCheckBox::indicator:hover { border-color: %ACCENT%; }
@@ -429,33 +504,33 @@ QListView { background: %CARD%; border: none; outline: none; }
 QPlainTextEdit {
     background: %DARK%;
     color: %DARK_FG%;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 12px;
+    border: 1px solid %LOG_BORDER%;
+    border-radius: 8px;
+    padding: 12px;
     font-family: Menlo, Consolas, monospace;
     font-size: 12px;
     selection-background-color: %ACCENT%;
     selection-color: #ffffff;
 }
 
-QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
-QScrollBar::handle:vertical { background: %LINE%; border-radius: 3px; min-height: 32px; margin: 0 2px; }
+QScrollBar:vertical { background: transparent; width: 8px; margin: 2px; }
+QScrollBar::handle:vertical { background: %LINE%; border-radius: 4px; min-height: 32px; margin: 0 2px; }
 QScrollBar::handle:vertical:hover { background: %INK_3%; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
 QScrollBar:horizontal { height: 0; }
 
 QMenuBar { background: %PAGE%; color: %INK_2%; }
-QMenu { background: %CARD%; border: 1px solid %LINE%; border-radius: 10px; padding: 5px; }
-QMenu::item { padding: 7px 22px 7px 14px; border-radius: 6px; color: %INK%; font-size: 13px; }
+QMenu { background: %CARD%; border: 1px solid %LINE%; border-radius: 8px; padding: 4px; }
+QMenu::item { padding: 8px 24px 8px 12px; border-radius: 4px; color: %INK%; font-size: 14px; }
 QMenu::item:selected { background: %FIELD%; }
 QMenu::item:disabled { color: %INK_3%; }
 QMenu::separator { height: 1px; background: %LINE%; margin: 4px 8px; }
 
 QMessageBox { background: %PAGE%; }
-QMessageBox QLabel { font-size: 13px; color: %INK%; }
+QMessageBox QLabel { font-size: 14px; color: %INK%; }
 QMessageBox QPushButton, QFileDialog QPushButton {
-    min-width: 64px; padding: 5px 14px; border-radius: 7px;
+    min-width: 64px; padding: 8px 12px; border-radius: 8px;
     background: %FIELD%; color: %INK%; border: none;
 }
 """
@@ -476,6 +551,7 @@ def build_qss(mode=None):
         "LINE": t["line"],
         "DARK": t["dark_log"],
         "DARK_FG": t["dark_log_fg"],
+        "LOG_BORDER": t["log_border"],
         "ACCENT": t["accent"],
         "ACCENT_SOFT": t["accent_soft"],
         "RED": t["red"],
@@ -783,12 +859,12 @@ def draw_scroll_edge_fade(p, viewport_rect, scrollbar, bg_color=None, fade_h=28)
 
 # ---------------------------------------------------------------- 卡片
 class Card(QFrame):
-    """圆角卡片 + 柔和多层环境投影（自适应浅色与深色模式）。"""
+    """圆角卡片 + 柔和多层环境投影（Tailwind radius/16，spacing/200=16px 同心圆角基准）。"""
 
     MARGIN = 6
-    RADIUS = 14
+    RADIUS = 16
 
-    def __init__(self, parent=None, padding=(18, 16, 18, 16)):
+    def __init__(self, parent=None, padding=(16, 16, 16, 16)):
         super().__init__(parent)
         self.setObjectName("card")
         self._cache = None
@@ -997,15 +1073,17 @@ class Button(QAbstractButton):
         w = fm.horizontalAdvance(self.text()) if self.text() else 0
         has_ic = bool(self._icon_kind or self._loading)
         if has_ic:
-            w += 16 + (6 if self.text() else 0)
-        pad = 16 if self.text() else 10
+            w += 16 + (8 if self.text() else 0)
+        pad = 12 if self.text() else 8
         return QSize(w + pad * 2, self._h)
 
     def minimumSizeHint(self):
         return self.sizeHint()
 
     def _font(self):
-        return ui_font(13, QFont.DemiBold if self.kind == "primary" else QFont.Medium)
+        # 主按钮 14px Semibold (Button-sm)，32px 紧凑顶栏按钮 12px Semibold (Button-Xsm)
+        px = 12 if self._h <= 32 else 14
+        return ui_font(px, QFont.DemiBold)
 
     def paintEvent(self, e):
         p = QPainter(self)
@@ -1022,7 +1100,7 @@ class Button(QAbstractButton):
 
         p.setPen(Qt.NoPen)
         p.setBrush(bg)
-        rad = min(10.0, r.height() / 2.0)
+        rad = min(8.0, r.height() / 2.0)
         p.drawRoundedRect(r, rad, rad)
 
         if self.kind == "primary" and (self.isEnabled() or self._loading):
@@ -1040,7 +1118,7 @@ class Button(QAbstractButton):
         tw = fm.horizontalAdvance(self.text()) if self.text() else 0
         has_ic = bool(self._icon_kind or self._loading)
         iw = 16 if has_ic else 0
-        gap = 6 if (iw and tw) else 0
+        gap = 8 if (iw and tw) else 0
         x = (r.width() - (tw + iw + gap)) / 2.0
 
         if self._loading:
@@ -1102,10 +1180,10 @@ class Segmented(QWidget):
         self._press_anim.setEasingCurve(ease_out())
         self._press_anim.valueChanged.connect(self._on_press)
 
-        px = 12 if compact else 13
+        px = 12 if compact else 14
         self._font = ui_font(px, QFont.Medium)
         self._font_active = ui_font(px, QFont.DemiBold)
-        self._font_badge = tabular_font(10 if compact else 11, QFont.DemiBold)
+        self._font_badge = tabular_font(12, QFont.DemiBold)
         self._recalc_width()
 
     def _recalc_width(self):
@@ -1115,12 +1193,20 @@ class Segmented(QWidget):
         for i, t in enumerate(self.labels):
             w = fm.horizontalAdvance(t)
             if self._badges[i]:
-                w += 5 + max(16, fm_b.horizontalAdvance(self._badges[i]) + 8)
+                w += 6 + max(18, fm_b.horizontalAdvance(self._badges[i]) + 8)
             max_w = max(max_w, w)
-        pad = 20 if self._compact else 34
-        min_seg = 52 if self._compact else 72
+        pad = 12 if self._compact else 18
+        min_seg = 40 if self._compact else 52
         self._seg_w = max(min_seg, max_w + pad)
-        self.setFixedWidth(self._seg_w * len(self.labels) + 6)
+        self._total_w = self._seg_w * len(self.labels) + 4
+        self.setFixedWidth(self._total_w)
+        self.updateGeometry()
+
+    def sizeHint(self):
+        return QSize(getattr(self, "_total_w", 120), self.height())
+
+    def minimumSizeHint(self):
+        return self.sizeHint()
 
     def _on_anim(self, v):
         self._pos = float(v)
@@ -1168,7 +1254,7 @@ class Segmented(QWidget):
 
     def mousePressEvent(self, e):
         if e.button() == Qt.LeftButton:
-            i = int((e.pos().x() - 3) // self._seg_w)
+            i = int((e.pos().x() - 2) // self._seg_w)
             if 0 <= i < len(self.labels):
                 self._pressed_seg = i
                 self._press_anim.stop()
@@ -1193,11 +1279,11 @@ class Segmented(QWidget):
         fm = QFontMetrics(f)
         fm_b = QFontMetrics(self._font_badge)
         for i, lbl in enumerate(self.labels):
-            seg = QRectF(3 + i * self._seg_w, 0, self._seg_w, r.height())
+            seg = QRectF(2 + i * self._seg_w, 0, self._seg_w, r.height())
             badge = self._badges[i]
             tw = fm.horizontalAdvance(lbl)
-            bw = max(16, fm_b.horizontalAdvance(badge) + 9) if badge else 0
-            gap = 5 if badge else 0
+            bw = max(18, fm_b.horizontalAdvance(badge) + 8) if badge else 0
+            gap = 6 if badge else 0
             total_w = tw + gap + bw
             sx = seg.left() + (seg.width() - total_w) / 2.0
 
@@ -1206,11 +1292,11 @@ class Segmented(QWidget):
             p.drawText(QRectF(sx, 0, tw + 2, r.height()), Qt.AlignVCenter | Qt.AlignLeft, lbl)
 
             if badge:
-                bh = 14 if self._compact else 16
+                bh = 16
                 br = QRectF(sx + tw + gap, (r.height() - bh) / 2.0, bw, bh)
                 p.setPen(Qt.NoPen)
                 p.setBrush(QColor(t["accent_soft"] if active else t["badge_inactive_bg"]))
-                p.drawRoundedRect(br, bh / 2.0, bh / 2.0)
+                p.drawRoundedRect(br, 4.0, 4.0)
                 p.setFont(self._font_badge)
                 p.setPen(QColor(t["accent"] if active else t["ink_2"]))
                 p.drawText(br, Qt.AlignCenter, badge)
@@ -1220,15 +1306,16 @@ class Segmented(QWidget):
         p.setRenderHint(QPainter.Antialiasing)
         r = QRectF(self.rect())
         t = theme()
-        rad = 7.0 if self._compact else 9.0
-        pill_rad = 5.5 if self._compact else 7.0
+        # 同心圆角公式 inner = outer - gap：outer=8, gap=2 -> inner=6；compact outer=6, gap=2 -> inner=4
+        rad = 6.0 if self._compact else 8.0
+        pill_rad = 4.0 if self._compact else 6.0
         p.setPen(Qt.NoPen)
         p.setBrush(QColor(t["field"]))
         p.drawRoundedRect(r, rad, rad)
 
         self._draw_labels(p, r, active=False)
 
-        pill = QRectF(3 + self._pos * self._seg_w, 3, self._seg_w, r.height() - 6)
+        pill = QRectF(2 + self._pos * self._seg_w, 2, self._seg_w, r.height() - 4)
         if self._press_val > 0.01 and not reduced_motion():
             dx = pill.width() * 0.015 * self._press_val
             dy = pill.height() * 0.025 * self._press_val
@@ -1255,9 +1342,9 @@ class Segmented(QWidget):
 
 # ---------------------------------------------------------------- 小部件
 class Avatar(QWidget):
-    """圆形头像：昵称首字 + 品牌色底。"""
+    """圆角方框头像（Squircle，取代普通正圆）：昵称首字 + 品牌色底。"""
 
-    def __init__(self, size=26, parent=None):
+    def __init__(self, size=24, parent=None):
         super().__init__(parent)
         self.setFixedSize(size, size)
         self._text = ""
@@ -1271,15 +1358,15 @@ class Avatar(QWidget):
         p.setRenderHint(QPainter.Antialiasing)
         p.setPen(Qt.NoPen)
         p.setBrush(QColor(t_color("accent")))
-        p.drawEllipse(QRectF(self.rect()))
+        p.drawRoundedRect(QRectF(self.rect()), 6.0, 6.0)
         p.setPen(QColor("#FFFFFF"))
-        p.setFont(ui_font(int(self.height() * 0.46), QFont.DemiBold))
+        p.setFont(ui_font(12, QFont.DemiBold))
         p.drawText(self.rect(), Qt.AlignCenter, self._text)
         p.end()
 
 
 class AccountChip(QAbstractButton):
-    """右上角的账号胶囊：支持 TabFocus 焦点环、--ease-out 悬停与 scale(0.97) 按压反馈。"""
+    """右上角的账号按钮：采用 radius/8 圆角矩形 + 内嵌 radius/4 同心圆角方框头像（8 - 4 = 4）。"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1288,7 +1375,7 @@ class AccountChip(QAbstractButton):
         self._name = None
         self._hover = 0.0
         self._press = 0.0
-        self.setFixedHeight(34)
+        self.setFixedHeight(32)
 
         self._anim = QVariantAnimation(self)
         self._anim.setDuration(DUR_HOVER)
@@ -1375,36 +1462,36 @@ class AccountChip(QAbstractButton):
             bg = mix(mix(t["card"], t["field"], self._hover), t["field_press"], self._press)
             p.setBrush(bg)
             p.setPen(QPen(QColor(t["line"]), 1))
-            p.drawRoundedRect(r.adjusted(0.5, 0.5, -0.5, -0.5), r.height() / 2, r.height() / 2)
-            av = QRectF(5, 5, r.height() - 10, r.height() - 10)
+            p.drawRoundedRect(r.adjusted(0.5, 0.5, -0.5, -0.5), 8.0, 8.0)
+            av = QRectF(4, 4, r.height() - 8, r.height() - 8)
             p.setPen(Qt.NoPen)
             p.setBrush(QColor(t["accent"]))
-            p.drawEllipse(av)
+            p.drawRoundedRect(av, 4.0, 4.0)
             p.setPen(QColor("#FFFFFF"))
             p.setFont(ui_font(12, QFont.DemiBold))
             p.drawText(av, Qt.AlignCenter, first_grapheme(self._name))
             p.setPen(QColor(t["ink"]))
             p.setFont(self._font())
             fm = QFontMetrics(self._font())
-            tr = QRectF(av.right() + 8, 0, r.width() - av.right() - 8 - 26, r.height())
+            tr = QRectF(av.right() + 8, 0, r.width() - av.right() - 8 - 24, r.height())
             elided = fm.elidedText(self._name, Qt.ElideRight, int(tr.width()))
             p.drawText(tr, Qt.AlignVCenter | Qt.AlignLeft, elided)
-            p.drawPixmap(QPointF(r.width() - 24, (r.height() - 14) / 2),
+            p.drawPixmap(QPointF(r.width() - 22, (r.height() - 14) / 2),
                          make_icon("chevron", t["ink_3"], 14))
         else:
-            hover_soft = "#4D2434" if is_dark() else "#FFE3EB"
-            press_soft = "#5C2A3E" if is_dark() else "#FFD4E1"
+            hover_soft = "#42242E" if is_dark() else "#FFE3EB"
+            press_soft = "#522B38" if is_dark() else "#FFD4E1"
             bg = mix(mix(t["accent_soft"], hover_soft, self._hover), press_soft, self._press)
             p.setBrush(bg)
-            p.drawRoundedRect(r, r.height() / 2, r.height() / 2)
+            p.drawRoundedRect(r, 8.0, 8.0)
             p.drawPixmap(QPointF(12, (r.height() - 16) / 2), make_icon("user", t["accent"], 16))
             p.setPen(QColor(t["accent"]))
-            p.setFont(ui_font(13, QFont.DemiBold))
+            p.setFont(ui_font(14, QFont.DemiBold))
             p.drawText(QRectF(34, 0, r.width() - 40, r.height()),
                        Qt.AlignVCenter | Qt.AlignLeft, "登录")
 
         if self.hasFocus():
-            draw_focus_ring(p, r, r.height() / 2.0)
+            draw_focus_ring(p, r, 8.0)
         p.end()
 
 
@@ -1605,7 +1692,7 @@ class LogoTile(QWidget):
             q = QPainter(pm)
             q.setRenderHint(QPainter.Antialiasing)
             path = QPainterPath()
-            path.addRoundedRect(QRectF(0, 0, w, w), w * 0.28, w * 0.28)
+            path.addRoundedRect(QRectF(0, 0, w, w), 8.0, 8.0)
             q.fillPath(path, QColor(t_color("fox_tile")))
             q.setClipPath(path)
             m = w * 0.86
